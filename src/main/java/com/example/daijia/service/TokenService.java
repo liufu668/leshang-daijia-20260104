@@ -1,79 +1,138 @@
 package com.example.daijia.service;
 
+import com.example.daijia.common.JwtTokenProvider;
 import com.example.daijia.model.Customer;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class TokenService {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
-    private CustomerService customerService;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final CustomerService customerService;
 
     private static final String TOKEN_PREFIX = "auth_token:";
-    private static final long TOKEN_EXPIRE_HOURS = 24;
 
     /**
-     * 创建Token并存储到Redis
-     * @param wxOpenId
+     * 创建Token
+     * @param customer
      * @return
      */
-    public String createToken(String wxOpenId) {
-        // 生成UUID token
-        String token = UUID.randomUUID().toString();
-        String key = TOKEN_PREFIX + token;
-
-        // 存储用户信息到Redis
-        Customer customer = customerService.loadUserByWxOpenId(wxOpenId);
-        redisTemplate.opsForValue().set(key, customer, TOKEN_EXPIRE_HOURS, TimeUnit.HOURS);
-
+    public String createToken(Customer customer) {
+        String token = jwtTokenProvider.generateToken(customer.getWxOpenId());
+        log.debug("为用户创建 Token:{}", customer.getWxOpenId());
         return token;
     }
 
     /**
      * 验证Token是否有效
+     * 1. Redis黑名单检查
+     * 2. JWT验证
      * @param token
      * @return
      */
     public boolean validateToken(String token) {
-        String key = TOKEN_PREFIX + token;
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+        // 检查是否在黑名单
+        if(isTokenBlacklisted(token)) {
+            log.warn("Token在黑名单中:{}", token);
+            return false;
+        }
+
+        // JWT验证(签名,过期时间)
+        return jwtTokenProvider.validateToken(token);
     }
 
     /**
-     * 根据 Token 获取用户信息
+     * 检查 Token 是否在黑名单
      * @param token
      * @return
      */
-    public Customer getUsernameByToken(String token) {
-        String key = TOKEN_PREFIX + token;
-        return (Customer) redisTemplate.opsForValue().get(key);
+    private boolean isTokenBlacklisted(String token) {
+        String blacklistKey = TOKEN_PREFIX + token;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(blacklistKey));
     }
 
     /**
-     * 删除 Token
+     * 根据 Token 从 JWT 解析 wxOpenId,获取用户信息
+     * @param token
+     * @return
+     */
+    public Customer getCustomerByToken(String token) {
+        // 验证 Token
+        if(!validateToken(token)) {
+            throw new SecurityException("Token无效或已过期");
+        }
+
+        String wxOpenId = jwtTokenProvider.getUserIdFromToken(token);
+
+        // 通过 wxOpenId 查询用户
+        return customerService.loadUserByWxOpenId(wxOpenId);
+    }
+
+    /**
+     * 退出登录后,将 Token 加入 Redis 黑名单
      * @param token
      */
-    public void deleteToken(String token) {
-        String key = TOKEN_PREFIX + token;
-        redisTemplate.delete(key);
+    public void logout(String token) {
+        try {
+            blacklistToken(token);
+            log.info("用户退出登录,Token已加入黑名单!");
+        } catch (Exception e) {
+            log.error("退出登录失败!", e);
+            throw new RuntimeException("退出登录失败!", e);
+        }
     }
 
     /**
      * 刷新 Token 过期时间
      * @param token
      */
-    public void refreshToken(String token) {
-        String key = TOKEN_PREFIX + token;
-        if(Boolean.TRUE.equals(redisTemplate.hasKey(key))){
-            redisTemplate.expire(key, TOKEN_EXPIRE_HOURS, TimeUnit.HOURS);
+    public String refreshToken(String token) {
+        if(!jwtTokenProvider.validateToken(token)) {
+            throw new SecurityException("Token无效,无法刷新!");
         }
+        // 从旧 Token 中获取用户信息
+        String wxOpenId = jwtTokenProvider.getUserIdFromToken(token);
+        // 将旧 Token 加入黑名单
+        blacklistToken(token);
+        // 生成新 Token
+        String newToken = jwtTokenProvider.generateToken(wxOpenId);
+        log.info("Token刷新成功,用户:{}", wxOpenId);
+        return newToken;
+    }
+
+    /**
+     * 将 Token 加入 Redis 黑名单
+     * @param token
+     */
+    private void blacklistToken(String token) {
+        if(jwtTokenProvider.validateToken(token)) {
+            Date expiration = jwtTokenProvider.getExpirationDateFromToken(token);
+            long ttl = expiration.getTime() - System.currentTimeMillis();
+            if(ttl > 0) {
+                String blacklistKey = TOKEN_PREFIX + token;
+                redisTemplate.opsForValue().set(blacklistKey, "blacklisted", ttl, TimeUnit.MILLISECONDS);
+                log.debug("Token加入黑名单,剩余有效期:{}秒", ttl);
+            }
+        }
+        log.debug("Token已过期,无需加入黑名单");
+    }
+
+    /**
+     * 删除 Token (清理用)
+     * @param token
+     */
+    public void deleteToken(String token) {
+        String blacklistKey = TOKEN_PREFIX + token;
+        redisTemplate.delete(blacklistKey);
+        log.debug("清除 Token 黑名单记录:{}", token);
     }
 }
