@@ -3,22 +3,32 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.daijia</groupId>
-        <artifactId>daijia-20251120</artifactId>
+        <artifactId>leshang-daijia-20260104</artifactId>
         <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>com.daijia</groupId>
     <artifactId>service-client</artifactId>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
     <name>service-client</name>
     <url>http://maven.apache.org</url>
+    <modules>
+        <module>service-customer-client</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
+        <!-- Nacos服务发现 -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

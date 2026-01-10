@@ -3,8 +3,9 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.daijia</groupId>
-        <artifactId>daijia-20251120</artifactId>
+        <artifactId>leshang-daijia-20260104</artifactId>
         <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>com.daijia</groupId>
@@ -15,6 +16,8 @@
     <url>http://maven.apache.org</url>
     <modules>
         <module>service-util</module>
+        <module>service-util</module>
+        <module>service-security</module>
     </modules>
 
     <properties>

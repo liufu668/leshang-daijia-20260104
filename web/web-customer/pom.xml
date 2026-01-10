@@ -3,15 +3,14 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.daijia</groupId>
-        <artifactId>common</artifactId>
+        <artifactId>web</artifactId>
         <version>1.0.0</version>
-        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>common-util</artifactId>
+    <artifactId>web-customer</artifactId>
     <packaging>jar</packaging>
 
-    <name>common-util</name>
+    <name>web-customer</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -19,6 +18,12 @@
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

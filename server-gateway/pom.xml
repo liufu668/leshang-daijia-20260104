@@ -3,8 +3,9 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.daijia</groupId>
-        <artifactId>daijia-20251120</artifactId>
+        <artifactId>leshang-daijia-20260104</artifactId>
         <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>com.daijia</groupId>
@@ -19,6 +20,18 @@
     </properties>
 
     <dependencies>
+
+        <!-- Nacos服务发现 -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

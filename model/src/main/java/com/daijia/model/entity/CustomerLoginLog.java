@@ -1,52 +1,27 @@
 package com.daijia.model.entity;
 
-import jakarta.persistence.*;
+import com.daijia.model.entity.base.BaseEntity;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-
-import java.time.LocalDateTime;
 
 /**
  * 客户登录记录
  */
 @Data
-@Entity
-@Table(name = "customer_login_log")
-public class CustomerLoginLog {
+@Schema(description = "CustomerLoginLog")
+public class CustomerLoginLog extends BaseEntity {
 
-    /**
-     * 访问ID
-     */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private static final long serialVersionUID = 1L;
 
-    /**
-     * 客户ID
-     */
-    private String customerId;
+    @Schema(description = "客户id")
+    private Long customerId;
 
-    /**
-     * 登录IP地址
-     */
+    @Schema(description = "登录IP地址")
     private String ipaddr;
 
-    /**
-     * 登录状态
-     */
-    private Integer status;
+    @Schema(description = "登录状态(0成功,1失败)")
+    private Boolean status;
 
-    /**
-     * 提示信息
-     */
+    @Schema(description = "提示信息")
     private String msg;
-
-    private LocalDateTime createTime;
-
-    private LocalDateTime updateTime;
-
-    /**
-     * 0:不可用
-     * 1:可用
-     */
-    private Integer isDeleted;
 }

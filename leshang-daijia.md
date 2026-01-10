@@ -21,3 +21,11 @@
 - Natapp：内网穿透
 - Docker：容器化技术;  生产环境Redis（运维人员）；快速搭建环境Docker run
 - Git：代码管理工具；Git使用，拉代码、提交、推送、合并、冲突解决
+
+
+## 从github上重新拉取项目
+克隆时直接指定分支（最常用）
+使用 -b 或 --branch 参数，后面跟上分支名。
+```bash
+git clone -b 分支名 https://github.com/你的用户名/你的仓库名.git
+```
