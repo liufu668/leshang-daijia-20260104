@@ -1,7 +1,9 @@
 package com.daijia.security.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.daijia.model.entity.CustomerInfo;
-import com.daijia.service.CustomerInfoService;
+import com.daijia.model.vo.customer.CustomerInfoVo;
+import com.daijia.service.impl.CustomerInfoServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -17,18 +19,16 @@ public class TokenService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final CustomerInfoService customerInfoService;
+    private final CustomerInfoServiceImpl customerInfoServiceImpl;
 
     private static final String TOKEN_PREFIX = "auth_token:";
 
     /**
      * 创建Token
-     * @param customerInfo
-     * @return
      */
-    public String createToken(CustomerInfo customerInfo) {
-        String token = jwtTokenProvider.generateToken(customerInfo.getWxOpenId());
-        log.debug("为用户创建 Token:{}", customerInfo.getWxOpenId());
+    public String createToken(String wxOpenId) {
+        String token = jwtTokenProvider.generateToken(wxOpenId);
+        log.debug("为用户创建 Token:{}", wxOpenId);
         return token;
     }
 
@@ -72,9 +72,10 @@ public class TokenService {
         }
 
         String wxOpenId = jwtTokenProvider.getUserIdFromToken(token);
+        CustomerInfoVo customerInfoVo = customerInfoServiceImpl.getOne(new LambdaQueryWrapper<CustomerInfoVo>().eq(CustomerInfoVo::getWxOpenId, wxOpenId));
 
-        // 通过 wxOpenId 查询用户
-        return customerInfoService.login(wxOpenId);
+        // 通过 wxOpenId 查询用户id
+        return customerInfoVo == null ? null : customerInfoVo.getWxOpenId();
     }
 
     /**

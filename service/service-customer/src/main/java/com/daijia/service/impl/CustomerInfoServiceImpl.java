@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.daijia.common.exception.GuiguException;
 import com.daijia.common.result.ResultCodeEnum;
-import com.daijia.config.WeChatProperties;
 import com.daijia.mapper.CustomerInfoMapper;
 import com.daijia.mapper.CustomerLoginLogMapper;
 import com.daijia.model.entity.CustomerInfo;
@@ -17,7 +16,6 @@ import com.daijia.model.vo.customer.CustomerLoginVo;
 import com.daijia.model.vo.customer.UpdateWxPhoneVo;
 import com.daijia.security.service.TokenService;
 import com.daijia.service.CustomerInfoService;
-import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.Random;
 
 @Slf4j
 @Service
@@ -36,12 +33,13 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
     private final CustomerLoginLogMapper customerLoginLogMapper;
     private final WxMaService wxMaService;
     private final CustomerInfoMapper customerInfoMapper;
+    private final TokenService tokenService;
 
 
     // 根据openid到数据库查找用户
     @Transactional(rollbackFor = {Exception.class})
     @Override
-    public Long login(String code){
+    public String login(String code){
         // 使用微信工具包对象,通过 code 获取微信唯一标识 openId
         String openId = null;
         try {
@@ -70,16 +68,17 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
         customerLoginLog.setMsg("小程序登录");
         customerLoginLogMapper.insert(customerLoginLog);
 
-        // 返回用户id
-        return customerInfo.getId();
+        String token = tokenService.createToken(openId);
+
+        return token;
     }
 
     @Override
     public CustomerLoginVo getCustomerInfo(Long customerId) {
         // 根据用户 ID 查询用户信息
-        CustomerInfo customerInfo = CustomerInfoMapper.selectById(customerId);
+        CustomerInfo customerInfo = customerInfoMapper.selectById(customerId);
 
-        // 封闭到 CustomerLoginVo
+        // 封装到 CustomerLoginVo
         CustomerLoginVo customerLoginVo = new CustomerLoginVo();
         // 复制属性
         BeanUtils.copyProperties(customerInfo, customerLoginVo);

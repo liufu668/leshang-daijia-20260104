@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 public interface CustomerInfoService extends IService<CustomerInfo> {
 
     // 微信小程序登录接口
-    Long login(String code);
+    String login(String code);
 
     // 获取客户登录信息
     CustomerLoginVo getCustomerInfo(Long customerId);

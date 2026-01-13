@@ -2,10 +2,8 @@ package com.daijia.controller;
 
 
 import com.daijia.common.result.Result;
-import com.daijia.model.entity.CustomerInfo;
 import com.daijia.model.vo.customer.CustomerLoginVo;
 import com.daijia.model.vo.customer.UpdateWxPhoneVo;
-import com.daijia.security.service.TokenService;
 import com.daijia.service.CustomerInfoService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.Random;
 
 // origins = "*": 允许所有域名/来源访问该接口
 // 浏览器会缓存 OPTIONS 预检请求的结果，在 3600 秒（1小时）内不再重复发送预检请求
@@ -25,13 +22,10 @@ import java.util.Random;
 public class CustomerController {
 
     private final CustomerInfoService customerInfoService;
-    private final TokenService tokenService;
-
-    private static final String AUTH_URL = "https://api.weixin.qq.com/sns/jscode2session?appid={appid}&secret={secret}&js_code={js_code}&grant_type={grant_type}";
 
     @Operation(summary = "小程序授权登录")
     @GetMapping("/login/{code}")
-    public Result<Long> login(@PathVariable String code) throws IOException {
+    public Result<String> login(@PathVariable String code) throws IOException {
         return Result.ok(customerInfoService.login(code));
     }
 
