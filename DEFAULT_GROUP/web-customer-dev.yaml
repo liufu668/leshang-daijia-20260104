@@ -1,26 +1,17 @@
 server:
-  port: 8600
-feign:
-  sentinel:
-    enabled: true
+  port: 8601
 spring:
   application:
-    name: leshang-daijia-20260104
-  datasource:
-    url: jdbc:mysql://localhost:3306/daijia_customer?serverTimezone=Asia/Shanghai
-    username: root
-    password: admin
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      connection-timeout: 30000
-      maximum-pool-size: 10
-      minimum-idle: 5
+    name: web-customer
   data:
     redis:
       host: localhost
       port: 6379
       timeout: 2000ms
   cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
     openfeign:
       lazy-attributes-resolution: true
       client:
@@ -29,10 +20,5 @@ spring:
             connectTimeout: 30000
             readTimeout: 30000
             loggerLevel: basic
-
-
-jwt:
-  secret: ${JWT_SECRET}
-  expiration-hours: 24
 
 

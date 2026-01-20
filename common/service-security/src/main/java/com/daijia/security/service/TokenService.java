@@ -1,9 +1,5 @@
 package com.daijia.security.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.daijia.model.entity.CustomerInfo;
-import com.daijia.model.vo.customer.CustomerInfoVo;
-import com.daijia.service.impl.CustomerInfoServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,8 +15,6 @@ public class TokenService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final CustomerInfoServiceImpl customerInfoServiceImpl;
-
     private static final String TOKEN_PREFIX = "auth_token:";
 
     /**
@@ -61,21 +55,19 @@ public class TokenService {
     }
 
     /**
-     * 根据 Token 从 JWT 解析 wxOpenId,获取用户信息
+     * 根据 Token 从 JWT 解析 wxOpenId
      * @param token
      * @return
      */
-    public Long getCustomerByToken(String token) {
+    public Long getCustomerIdByToken(String token) {
         // 验证 Token
         if(!validateToken(token)) {
             throw new SecurityException("Token无效或已过期");
         }
 
         String wxOpenId = jwtTokenProvider.getUserIdFromToken(token);
-        CustomerInfoVo customerInfoVo = customerInfoServiceImpl.getOne(new LambdaQueryWrapper<CustomerInfoVo>().eq(CustomerInfoVo::getWxOpenId, wxOpenId));
 
-        // 通过 wxOpenId 查询用户id
-        return customerInfoVo == null ? null : customerInfoVo.getWxOpenId();
+        return wxOpenId;
     }
 
     /**

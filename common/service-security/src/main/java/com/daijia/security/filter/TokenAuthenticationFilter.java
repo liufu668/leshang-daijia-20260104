@@ -26,7 +26,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         String token = extractToken(request);
 
         if(token != null && tokenService.validateToken(token)) {
-            Long customerId = tokenService.getCustomerByToken(token);
+            Long customerId = tokenService.getCustomerIdByToken(token);
             if(customerId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(customerId,
                         null,

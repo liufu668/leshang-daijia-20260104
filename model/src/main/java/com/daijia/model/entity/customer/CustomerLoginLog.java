@@ -1,4 +1,4 @@
-package com.daijia.model.entity;
+package com.daijia.model.entity.customer;
 
 import com.daijia.model.entity.base.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;

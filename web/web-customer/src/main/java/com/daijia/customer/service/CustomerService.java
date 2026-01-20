@@ -9,9 +9,7 @@ public interface CustomerService {
     String login(String code);
 
     // 获取用户信息
-    CustomerLoginVo getCustomerLoginInfo(String token);
-
-    CustomerLoginVo getCustomerInfo(Long customerId);
+    CustomerLoginVo getCustomerLoginInfo(Long customerId);
 
     Boolean updateWxPhoneNumber(UpdateWxPhoneVo updateWxPhoneVo);
 }

@@ -10,8 +10,8 @@ import com.daijia.common.exception.GuiguException;
 import com.daijia.common.result.ResultCodeEnum;
 import com.daijia.mapper.CustomerInfoMapper;
 import com.daijia.mapper.CustomerLoginLogMapper;
-import com.daijia.model.entity.CustomerInfo;
-import com.daijia.model.entity.CustomerLoginLog;
+import com.daijia.model.entity.customer.CustomerInfo;
+import com.daijia.model.entity.customer.CustomerLoginLog;
 import com.daijia.model.vo.customer.CustomerLoginVo;
 import com.daijia.model.vo.customer.UpdateWxPhoneVo;
 import com.daijia.security.service.TokenService;
@@ -83,9 +83,10 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
         // 复制属性
         BeanUtils.copyProperties(customerInfo, customerLoginVo);
 
+        // 判断是否绑定手机号码
         String phone = customerInfo.getPhone();
-        boolean isBindPhone = StringUtils.hasText(phone);
-        customerLoginVo.setIsBindPhone(isBindPhone);
+        boolean isBindPhone = StringUtils.hasText(phone); // 检查手机号是否为空
+        customerLoginVo.setIsBindPhone(isBindPhone); // 设置是否绑定手机号
         return customerLoginVo;
     }
 
@@ -97,7 +98,7 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
             //String randomNum = String.format("%08d", random.nextInt(10000000, 99999999));
             //String phone = "138" + randomNum;
 
-            // 1. 根据code值获取微信绑定手机号码
+            // 根据code值获取微信绑定手机号码
             WxMaPhoneNumberInfo phoneNoInfo = wxMaService.getUserService().getPhoneNoInfo(updateWxPhoneVo.getCode());
             String phone = phoneNoInfo.getPhoneNumber(); // 获取手机号
 
@@ -106,14 +107,14 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
             customerInfo.setPhone(phone);
             customerInfoMapper.updateById(customerInfo);
 
-            return true;
+            return true; // 返回更新成功
         } catch (WxErrorException e) {
-            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR); // 招聘数据错误异常
         }
     }
 
     @Override
-    public String getCustomerOpenId(Long customerId) {
+    public String getCustomerWxOpenId(Long customerId) {
         // selectById() 默认会查询所有字段，如果只需要 OpenId，会造成不必要的数据库传输。
         // 而 Lambada 查询只查所需字段,性能更优
         LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();

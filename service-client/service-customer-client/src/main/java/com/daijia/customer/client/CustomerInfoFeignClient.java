@@ -13,7 +13,7 @@ public interface CustomerInfoFeignClient {
     public Result<String> login(@PathVariable String code);
 
     @GetMapping("/customer/info/getCustomerLoginInfo/{customerId}")
-    Result<CustomerLoginVo> getCustomerLoginInfo(@PathVariable("customerId") Long customerId);
+    Result<CustomerLoginVo> getCustomerLoginInfo(@PathVariable Long customerId);
 
     @PostMapping("/customer/info/updateWxPhoneNumber")
     Result<Boolean> updateWxPhoneNumber(@RequestBody UpdateWxPhoneVo updateWxPhoneVo);

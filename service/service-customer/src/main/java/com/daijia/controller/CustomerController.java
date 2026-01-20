@@ -12,9 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
-// origins = "*": 允许所有域名/来源访问该接口
-// 浏览器会缓存 OPTIONS 预检请求的结果，在 3600 秒（1小时）内不再重复发送预检请求
-@CrossOrigin(origins = "*", maxAge = 3600)
+
 @RestController
 @RequestMapping("/customer-api/customer")
 @Slf4j
@@ -25,7 +23,7 @@ public class CustomerController {
 
     @Operation(summary = "小程序授权登录")
     @GetMapping("/login/{code}")
-    public Result<String> login(@PathVariable String code) throws IOException {
+    public Result<String> login(@PathVariable String code){
         return Result.ok(customerInfoService.login(code));
     }
 
@@ -37,7 +35,7 @@ public class CustomerController {
     }
 
     @Operation(summary = "更新客户微信手机号码")
-    @PostMapping("/updateWxPhone")
+    @PostMapping("/updateWxPhoneNumber")
     public Result<Boolean> updateWxPhone(@RequestBody UpdateWxPhoneVo updateWxPhoneVo) {
         return Result.ok(customerInfoService.updateWxPhoneNumber(updateWxPhoneVo));
     }
@@ -45,6 +43,6 @@ public class CustomerController {
     @Operation(summary = "获取客户OpenId")
     @GetMapping("/getCustomerOpenId/{customerId}")
     public Result<String> getCustomerOpenId(@PathVariable Long customerId) {
-        return Result.ok(customerInfoService.getCustomerOpenId(customerId));
+        return Result.ok(customerInfoService.getCustomerWxOpenId(customerId));
     }
 }

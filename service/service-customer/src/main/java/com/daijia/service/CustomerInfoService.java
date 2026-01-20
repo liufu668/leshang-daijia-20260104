@@ -1,7 +1,7 @@
 package com.daijia.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.daijia.model.entity.CustomerInfo;
+import com.daijia.model.entity.customer.CustomerInfo;
 import com.daijia.model.vo.customer.CustomerLoginVo;
 import com.daijia.model.vo.customer.UpdateWxPhoneVo;
 import org.springframework.stereotype.Service;
@@ -18,5 +18,5 @@ public interface CustomerInfoService extends IService<CustomerInfo> {
     // 更新客户微信手机号码
     Boolean updateWxPhoneNumber(UpdateWxPhoneVo updateWxPhoneVo);
 
-    String getCustomerOpenId(Long customerId);
+    String getCustomerWxOpenId(Long customerId);
 }
