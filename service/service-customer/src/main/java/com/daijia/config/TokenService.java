@@ -1,5 +1,11 @@
-package com.daijia.security.service;
+package com.daijia.config;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.daijia.common.exception.GuiguException;
+import com.daijia.common.result.ResultCodeEnum;
+import com.daijia.mapper.CustomerInfoMapper;
+import com.daijia.model.entity.customer.CustomerInfo;
+import com.daijia.security.config.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -15,6 +21,7 @@ public class TokenService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final CustomerInfoMapper customerInfoMapper;
     private static final String TOKEN_PREFIX = "auth_token:";
 
     /**
@@ -66,8 +73,13 @@ public class TokenService {
         }
 
         String wxOpenId = jwtTokenProvider.getUserIdFromToken(token);
-
-        return wxOpenId;
+        LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CustomerInfo::getWxOpenId, wxOpenId);
+        CustomerInfo customerInfo = customerInfoMapper.selectOne(wrapper);
+        if(customerInfo == null) {
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
+        return customerInfo.getId();
     }
 
     /**

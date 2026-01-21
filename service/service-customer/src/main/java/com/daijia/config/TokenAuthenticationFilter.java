@@ -1,6 +1,5 @@
-package com.daijia.security.filter;
+package com.daijia.config;
 
-import com.daijia.security.service.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -14,8 +14,8 @@ public class JwtProperties {
     private Long expirationHours = 24L;
 
     // 工具方法:获取毫秒数
-    public long getExpirationMillis() {
-        //return 1000; // jwt token 1000毫秒过期
-        return expirationHours * 60 * 60 * 1000; //jwt token 24小时后过期
-    }
+    //public long getExpirationMillis() {
+    //    //return 1000; // jwt token 1000毫秒过期
+    //    return expirationHours * 60 * 60 * 1000; //jwt token 24小时后过期
+    //}
 }

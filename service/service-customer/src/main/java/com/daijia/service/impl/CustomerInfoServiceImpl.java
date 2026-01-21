@@ -14,7 +14,7 @@ import com.daijia.model.entity.customer.CustomerInfo;
 import com.daijia.model.entity.customer.CustomerLoginLog;
 import com.daijia.model.vo.customer.CustomerLoginVo;
 import com.daijia.model.vo.customer.UpdateWxPhoneVo;
-import com.daijia.security.service.TokenService;
+import com.daijia.config.TokenService;
 import com.daijia.service.CustomerInfoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -118,8 +118,11 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
         // selectById() 默认会查询所有字段，如果只需要 OpenId，会造成不必要的数据库传输。
         // 而 Lambada 查询只查所需字段,性能更优
         LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(CustomerInfo::getWxOpenId, customerId);
+        wrapper.eq(CustomerInfo::getId, customerId);
         CustomerInfo customerInfo = customerInfoMapper.selectOne(wrapper);
+        if(customerInfo == null) {
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
         return customerInfo.getWxOpenId();
     }
 }

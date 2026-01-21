@@ -5,6 +5,7 @@
         <groupId>com.daijia</groupId>
         <artifactId>service-client</artifactId>
         <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>service-customer-client</artifactId>

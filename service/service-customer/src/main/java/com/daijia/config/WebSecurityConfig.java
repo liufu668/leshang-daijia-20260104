@@ -1,6 +1,5 @@
-package com.daijia.security.config;
+package com.daijia.config;
 
-import com.daijia.security.filter.TokenAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -25,10 +24,10 @@ import java.util.Arrays;
 @RequiredArgsConstructor // Lombok:为所有final字段生成构造函数
 @EnableWebSecurity
 public class WebSecurityConfig {
-
-    @Lazy
-    @Autowired
-    private TokenAuthenticationFilter tokenAuthenticationFilter;
+    //
+    //@Lazy
+    //@Autowired
+    private final TokenAuthenticationFilter tokenAuthenticationFilter;
 
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();

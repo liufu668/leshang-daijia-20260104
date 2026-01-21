@@ -1,7 +1,6 @@
-package com.daijia.security.service;
+package com.daijia.security.config;
 
 
-import com.daijia.security.config.JwtProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +21,7 @@ public class JwtTokenProvider {
 
     private final JwtProperties jwtProperties;
 
+
     // 获取签名密钥
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes());
@@ -34,7 +34,7 @@ public class JwtTokenProvider {
      */
     public String generateToken(String wxOpenId) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtProperties.getExpirationMillis());
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getExpirationHours() * 60 * 60 * 1000);
 
         return Jwts.builder()
                 .setSubject(String.valueOf(wxOpenId))
