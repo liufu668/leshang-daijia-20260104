@@ -1,3 +1,7 @@
 wechat:
   app-id: ${WECHAT_APPID}
   app-secret: ${WECHAT_APP_SECRET}
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-hours: 24

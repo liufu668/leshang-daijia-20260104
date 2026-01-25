@@ -1,10 +1,9 @@
-package com.daijia.config;
+package com.daijia.security.config;
 
+import com.daijia.security.filter.TokenAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,9 +23,7 @@ import java.util.Arrays;
 @RequiredArgsConstructor // Lombok:为所有final字段生成构造函数
 @EnableWebSecurity
 public class WebSecurityConfig {
-    //
-    //@Lazy
-    //@Autowired
+
     private final TokenAuthenticationFilter tokenAuthenticationFilter;
 
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {

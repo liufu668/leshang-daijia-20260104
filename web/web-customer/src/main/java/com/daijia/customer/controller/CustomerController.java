@@ -23,7 +23,7 @@ public class CustomerController {
     private CustomerService customerInfoService;
 
     @Operation(summary = "获取客户登录信息")
-    @GetMapping("getCustomerLoginInfo")
+    @GetMapping("/getCustomerLoginInfo")
     public Result<CustomerLoginVo> getCustomerLoginInfo() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Long customerId = Long.valueOf(authentication.getName());

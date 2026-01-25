@@ -10,11 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-
 
 @RestController
-@RequestMapping("/customer-api/customer")
+@RequestMapping("/customer/info")
 @Slf4j
 @RequiredArgsConstructor // 构造器注入
 public class CustomerController {
@@ -24,6 +22,7 @@ public class CustomerController {
     @Operation(summary = "小程序授权登录")
     @GetMapping("/login/{code}")
     public Result<String> login(@PathVariable String code){
+
         return Result.ok(customerInfoService.login(code));
     }
 

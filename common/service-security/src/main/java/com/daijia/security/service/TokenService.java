@@ -1,4 +1,4 @@
-package com.daijia.config;
+package com.daijia.security.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.daijia.common.exception.GuiguException;

@@ -19,27 +19,27 @@ spring:
     redis:
       host: localhost
       port: 6379
-      timeout: 2000ms
+      password:  # 如果有密码就填，没有就留空或删除这行
+      database: 0  # 添加这个，默认是0
+      connect-timeout: 2000ms  # 修改timeout的配置名
+      timeout: 2000ms  # 这是lettuce的command-timeout
       lettuce:
         pool:
+          enabled: true  # 明确启用连接池
           max-active: 8
           max-idle: 8
           min-idle: 0
+          max-wait: -1ms  # 添加这个配置
+        shutdown-timeout: 100ms  # 添加关闭超时
 
 # MyBatis-Plus 配置
 mybatis-plus:
-  # Mapper XML 文件位置
   mapper-locations: classpath:mapper/*.xml
-  # 实体类别名包路径
   type-aliases-package: com.daijia.entity.customer
   configuration:
-    # 开启驼峰命名自动映射
     map-underscore-to-camel-case: true
-    # SQL 日志输出
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    # 缓存配置
     cache-enabled: true
-    # 延迟加载
     lazy-loading-enabled: true
   global-config:
     db-config:
@@ -54,3 +54,4 @@ logging:
     root: INFO
     com.daijia: DEBUG
     com.baomidou.mybatisplus: DEBUG
+    org.springframework.data.redis: DEBUG  # 添加Redis调试日志

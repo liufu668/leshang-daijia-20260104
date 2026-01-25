@@ -4,9 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.daijia.model.entity.customer.CustomerInfo;
 import com.daijia.model.vo.customer.CustomerLoginVo;
 import com.daijia.model.vo.customer.UpdateWxPhoneVo;
-import org.springframework.stereotype.Service;
 
-@Service
 public interface CustomerInfoService extends IService<CustomerInfo> {
 
     // 微信小程序登录接口
