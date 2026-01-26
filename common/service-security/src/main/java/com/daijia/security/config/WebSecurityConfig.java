@@ -64,7 +64,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 放行（允许匿名访问）的请求路径
                         // 通常包括：登录、注册、公开API等不需要认证的接口
-                        .requestMatchers("/customer-api/customer/**").permitAll()
+                        .requestMatchers("/customer/**").permitAll()
 
                         // 其他所有请求都需要认证
                         // 此规则必须放在最后，因为它会匹配所有未在前面匹配到的请求

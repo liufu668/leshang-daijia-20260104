@@ -24,6 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.Date;
+import java.util.Random;
+
 
 @Slf4j
 @Service
@@ -53,12 +56,18 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
         // 根据 openId 查询数据库表
         // 如果 openId 不存在则返回 null, 如果存在则返回一条记录
         CustomerInfo customerInfo = this.getOne(new LambdaQueryWrapper<CustomerInfo>().eq(CustomerInfo::getWxOpenId, openId));
+
+        Date now = new Date();
+
         // 用户不存在,就创建新用户
         if(null == customerInfo){
             customerInfo = new CustomerInfo();
             customerInfo.setNickname(String.valueOf(System.currentTimeMillis()));
             customerInfo.setAvatarUrl("https://oss.aliyuncs.com/aliyun_id_photo_bucket/default_handsome.jpg");
             customerInfo.setWxOpenId(openId);
+
+            customerInfo.setCreateTime(now);
+            customerInfo.setUpdateTime(now);
             this.save(customerInfo);
         }
 
@@ -66,6 +75,8 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
         CustomerLoginLog customerLoginLog = new CustomerLoginLog();
         customerLoginLog.setCustomerId(customerInfo.getId());
         customerLoginLog.setMsg("小程序登录");
+        // 登录日志一旦创建后不会再修改,所以只设置 createTime,不设置 updateTime
+        customerLoginLog.setCreateTime(now);
         customerLoginLogMapper.insert(customerLoginLog);
 
         String token = tokenService.createToken(openId);
@@ -92,27 +103,31 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
 
     @Override
     public Boolean updateWxPhoneNumber(UpdateWxPhoneVo updateWxPhoneVo) {
-        try {
-            //// 生成模拟手机号: 138 + 随机 8 位数字
-            //Random random = new Random();
-            //String randomNum = String.format("%08d", random.nextInt(10000000, 99999999));
-            //String phone = "138" + randomNum;
+        // 根据code值获取微信绑定手机号码
+        //WxMaPhoneNumberInfo phoneNoInfo = wxMaService.getUserService().getPhoneNoInfo(updateWxPhoneVo.getCode());
+        //String phone = phoneNoInfo.getPhoneNumber(); // 获取手机号
 
-            // 根据code值获取微信绑定手机号码
-            WxMaPhoneNumberInfo phoneNoInfo = wxMaService.getUserService().getPhoneNoInfo(updateWxPhoneVo.getCode());
-            String phone = phoneNoInfo.getPhoneNumber(); // 获取手机号
+        // 生成模拟手机号: 138 + 随机 8 位数字
+        Random random = new Random();
+        String randomNum = String.format("%08d", random.nextInt(10000000, 99999999));
+        String phone = "138" + randomNum;
 
-            // 更新数据库
-            CustomerInfo customerInfo = customerInfoMapper.selectById(updateWxPhoneVo.getCustomerId());
-            customerInfo.setPhone(phone);
-            customerInfoMapper.updateById(customerInfo);
+        // 更新数据库
+        CustomerInfo customerInfo = customerInfoMapper.selectById(updateWxPhoneVo.getCustomerId());
+        customerInfo.setPhone(phone);
+        customerInfo.setUpdateTime(new Date());
+        customerInfoMapper.updateById(customerInfo);
 
-            return true; // 返回更新成功
-        } catch (WxErrorException e) {
-            throw new GuiguException(ResultCodeEnum.DATA_ERROR); // 招聘数据错误异常
-        }
+        log.info("绑定手机号成功,phone: {}", phone);
+
+        return true; // 返回更新成功
     }
 
+    /**
+     * 根据 customerId获取客户的 wxOpenId
+     * @param customerId
+     * @return
+     */
     @Override
     public String getCustomerWxOpenId(Long customerId) {
         // selectById() 默认会查询所有字段，如果只需要 OpenId，会造成不必要的数据库传输。
@@ -124,5 +139,21 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
             throw new GuiguException(ResultCodeEnum.DATA_ERROR);
         }
         return customerInfo.getWxOpenId();
+    }
+
+    /**
+     * 根据 wxOpenId 获取 customerId
+     * @param wxOpenId
+     * @return
+     */
+    @Override
+    public Long getCustomerIdByWxOpenId(String wxOpenId) {
+        LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CustomerInfo::getWxOpenId, wxOpenId);
+        CustomerInfo customerInfo = customerInfoMapper.selectOne(wrapper);
+        if(customerInfo == null) {
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
+        return customerInfo.getId();
     }
 }

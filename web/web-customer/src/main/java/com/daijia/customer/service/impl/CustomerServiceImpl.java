@@ -52,6 +52,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Boolean updateWxPhoneNumber(UpdateWxPhoneVo updateWxPhoneVo) {
+        Result<Boolean> updateWxPhoneNumberResult = customerInfoFeignClient.updateWxPhoneNumber(updateWxPhoneVo);
         return true;
     }
 }

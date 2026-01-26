@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * JWT 核心工具类
@@ -39,12 +40,16 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getExpirationHours() * 60 * 60 * 1000);
 
-        return Jwts.builder()
+        String token =  Jwts.builder()
                 .setSubject(String.valueOf(wxOpenId))
+                .setId(UUID.randomUUID().toString())  // 添加唯一ID
                 .setIssuedAt(now)                       // 签发时间
                 .setExpiration(expiryDate)              // 过期时间
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256) // 签名
                 .compact();
+
+        log.info("生成新Token: {}", token);
+        return token;
     }
 
     /**
@@ -70,7 +75,7 @@ public class JwtTokenProvider {
      * @param token
      * @return
      */
-    public String getUserIdFromToken(String token) {
+    public String getWxOpenIdFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()

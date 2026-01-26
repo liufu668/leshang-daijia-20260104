@@ -11,5 +11,6 @@ public interface CustomerService {
     // 获取用户信息
     CustomerLoginVo getCustomerLoginInfo(Long customerId);
 
+    // 更新微信用户手机号
     Boolean updateWxPhoneNumber(UpdateWxPhoneVo updateWxPhoneVo);
 }

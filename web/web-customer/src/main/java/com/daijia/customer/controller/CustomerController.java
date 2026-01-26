@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @Tag(name = "客户API接口管理")
 @RestController
+// 配置文件把前端传过来的请求地址削掉了一层 customer-api,所以安全拦截那里注意是 /customer
 @RequestMapping("/customer")
 public class CustomerController {
 
@@ -27,6 +28,7 @@ public class CustomerController {
     public Result<CustomerLoginVo> getCustomerLoginInfo() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Long customerId = Long.valueOf(authentication.getName());
+        log.info("准备根据客户的customerId获取客户登录信息, customerId: {}", customerId);
         CustomerLoginVo customerLoginVo = customerInfoService.getCustomerLoginInfo(customerId);
         return Result.ok(customerLoginVo);
     }
@@ -44,6 +46,7 @@ public class CustomerController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Long customerId = Long.valueOf(authentication.getName());
         updateWxPhoneVo.setCustomerId(customerId);
+        log.info("更新用户微信手机号,customerId: {}", customerId);
         return Result.ok(customerInfoService.updateWxPhoneNumber(updateWxPhoneVo));
     }
 }

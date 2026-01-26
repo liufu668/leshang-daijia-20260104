@@ -1,10 +1,7 @@
 package com.daijia.security.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.daijia.common.exception.GuiguException;
-import com.daijia.common.result.ResultCodeEnum;
-import com.daijia.mapper.CustomerInfoMapper;
-import com.daijia.model.entity.customer.CustomerInfo;
+
+import com.daijia.customer.client.CustomerInfoFeignClient;
 import com.daijia.security.config.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,8 +18,9 @@ public class TokenService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final CustomerInfoMapper customerInfoMapper;
+    //private final CustomerInfoMapper customerInfoMapper;
     private static final String TOKEN_PREFIX = "auth_token:";
+    private final CustomerInfoFeignClient customerInfoFeignClient;
 
     /**
      * 创建Token
@@ -72,14 +70,20 @@ public class TokenService {
             throw new SecurityException("Token无效或已过期");
         }
 
-        String wxOpenId = jwtTokenProvider.getUserIdFromToken(token);
-        LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(CustomerInfo::getWxOpenId, wxOpenId);
-        CustomerInfo customerInfo = customerInfoMapper.selectOne(wrapper);
-        if(customerInfo == null) {
-            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
-        }
-        return customerInfo.getId();
+        String wxOpenId = jwtTokenProvider.getWxOpenIdFromToken(token);
+        Long customerId = customerInfoFeignClient.getCustomerIdByWxOpenId(wxOpenId).getData();
+
+        log.info("从token中解析出wxOpenId,并根据wxOpenId获取到customerId: {}" , customerId);
+
+        return customerId;
+
+        //LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();
+        //wrapper.eq(CustomerInfo::getWxOpenId, wxOpenId);
+        //CustomerInfo customerInfo = customerInfoMapper.selectOne(wrapper);
+        //if(customerInfo == null) {
+        //    throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        //}
+        //return customerInfo.getId();
     }
 
     /**
@@ -105,12 +109,12 @@ public class TokenService {
             throw new SecurityException("Token无效,无法刷新!");
         }
         // 从旧 Token 中获取用户信息
-        String wxOpenId = jwtTokenProvider.getUserIdFromToken(token);
+        String wxOpenId = jwtTokenProvider.getWxOpenIdFromToken(token);
         // 将旧 Token 加入黑名单
         blacklistToken(token);
         // 生成新 Token
         String newToken = jwtTokenProvider.generateToken(wxOpenId);
-        log.info("Token刷新成功,用户:{}", wxOpenId);
+        log.info("Token刷新成功,用户wxOpenId:{}", wxOpenId);
         return newToken;
     }
 
@@ -125,10 +129,10 @@ public class TokenService {
             if(ttl > 0) {
                 String blacklistKey = TOKEN_PREFIX + token;
                 redisTemplate.opsForValue().set(blacklistKey, "blacklisted", ttl, TimeUnit.MILLISECONDS);
-                log.debug("Token加入黑名单,剩余有效期:{}秒", ttl);
+                log.info("Token加入黑名单,剩余有效期:{}秒", ttl);
             }
         }
-        log.debug("Token已过期,无需加入黑名单");
+        log.info("Token已过期,无需加入黑名单");
     }
 
     /**
@@ -138,6 +142,6 @@ public class TokenService {
     public void deleteToken(String token) {
         String blacklistKey = TOKEN_PREFIX + token;
         redisTemplate.delete(blacklistKey);
-        log.debug("清除 Token 黑名单记录:{}", token);
+        log.info("清除 Token 黑名单记录:{}", token);
     }
 }

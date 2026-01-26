@@ -1,9 +1,11 @@
 package com.daijia.security.filter;
 
+import com.daijia.security.service.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,6 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 //@RequiredArgsConstructor
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
@@ -26,7 +29,9 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        String token = extractToken(request);
+        String token = request.getHeader("token");
+
+        log.info("拦截器拦截并需要认证的token: {}", token);
 
         if(token != null && tokenService.validateToken(token)) {
             Long customerId = tokenService.getCustomerIdByToken(token);
@@ -38,22 +43,17 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
                 // 刷新 Token 过期时间
-                tokenService.refreshToken(token);
+                String newToken = tokenService.refreshToken(token);
+                if(newToken != null && !newToken.isEmpty()){
+                    // 将新 Token 添加到响应头中
+                    response.setHeader("new-token", newToken);
+                    response.setHeader("Access-Control-Expose-Headers", "new-token"); // 允许前端访问
+                    log.info("Token已刷新并返回新Token到响应头, newToken: {}", newToken);
+                }
             }
         }
-        filterChain.doFilter(request, response);
-    }
 
-    /**
-     * 提取 Token
-     * @param request
-     * @return
-     */
-    private String extractToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return request.getParameter("token");
+        // 继续处理请求
+        filterChain.doFilter(request, response);
     }
 }
