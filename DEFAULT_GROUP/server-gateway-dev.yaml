@@ -26,3 +26,9 @@ spring:
             - Path=/customer-api/**
           filters:
             - StripPrefix=1
+        - id: web-driver
+          uri: lb://web-driver
+          predicates:
+            - Path=/driver-api/**
+          filters:
+            - StripPrefix=1

@@ -31,10 +31,13 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
         String token = request.getHeader("token");
 
+        log.info("请求URL: {}", request.getRequestURI());
+
         log.info("拦截器拦截并需要认证的token: {}", token);
 
         if(token != null && tokenService.validateToken(token)) {
             Long customerId = tokenService.getCustomerIdByToken(token);
+            log.info("从前端token中解析出来的用户id: " + customerId);
             if(customerId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(customerId,
                         null,

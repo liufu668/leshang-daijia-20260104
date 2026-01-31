@@ -1,0 +1,24 @@
+server:
+  port: 8602
+spring:
+  application:
+    name: web-driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.101.12:8848
+    openfeign:
+      lazy-attributes-resolution: true
+      client:
+        config:
+          default:
+            connectTimeout: 30000
+            readTimeout: 30000
+            loggerLevel: basic
+
+

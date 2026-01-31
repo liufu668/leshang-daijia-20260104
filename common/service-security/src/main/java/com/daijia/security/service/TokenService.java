@@ -2,6 +2,7 @@ package com.daijia.security.service;
 
 
 import com.daijia.customer.client.CustomerInfoFeignClient;
+import com.daijia.driver.client.DriverInfoFeignClient;
 import com.daijia.security.config.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class TokenService {
     //private final CustomerInfoMapper customerInfoMapper;
     private static final String TOKEN_PREFIX = "auth_token:";
     private final CustomerInfoFeignClient customerInfoFeignClient;
+    private final DriverInfoFeignClient driverInfoFeignClient;
 
     /**
      * 创建Token
@@ -73,8 +75,10 @@ public class TokenService {
         String wxOpenId = jwtTokenProvider.getWxOpenIdFromToken(token);
         Long customerId = customerInfoFeignClient.getCustomerIdByWxOpenId(wxOpenId).getData();
 
-        log.info("从token中解析出wxOpenId,并根据wxOpenId获取到customerId: {}" , customerId);
-
+        // 从customer_info表中找不到,就说明要从driver_info表中找
+        if(customerId == null) {
+            customerId  = driverInfoFeignClient.getDriverIdByWxOpenId(wxOpenId).getData();
+        }
         return customerId;
 
         //LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();

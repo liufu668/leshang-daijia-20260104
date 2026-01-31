@@ -1,0 +1,20 @@
+package com.daijia.driver.client;
+
+import com.daijia.common.result.Result;
+import com.daijia.model.vo.driver.DriverLoginVo;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+@FeignClient(value = "service-driver")
+public interface DriverInfoFeignClient {
+
+    @GetMapping("/driver/info/login/{code}")
+    public Result<String> login(@PathVariable String code);
+
+    @GetMapping("/driver/info/getDriverLoginInfo/{driverId}")
+    public Result<DriverLoginVo> getDriverLoginInfo(Long driverId);
+
+    @GetMapping("/driver/info/getDriverIdByWxOpenId/{wxOpenId}")
+    public Result<Long> getDriverIdByWxOpenId(String wxOpenId);
+}

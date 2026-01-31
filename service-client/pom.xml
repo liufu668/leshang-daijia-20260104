@@ -16,6 +16,7 @@
     <url>http://maven.apache.org</url>
     <modules>
         <module>service-customer-client</module>
+        <module>service-driver-client</module>
     </modules>
 
     <properties>

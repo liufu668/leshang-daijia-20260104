@@ -1,11 +1,11 @@
 server:
-  port: 8501
+  port: 8502
 
 spring:
   application:
-    name: service-customer
+    name: service-driver
   datasource:
-    url: jdbc:mysql://localhost:3306/daijia_customer?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&useSSL=false
+    url: jdbc:mysql://localhost:3306/daijia_driver?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&useSSL=false
     username: root
     password: admin
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -35,7 +35,7 @@ spring:
 # MyBatis-Plus 配置
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.daijia.entity.customer
+  type-aliases-package: com.daijia.entity.driver
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
