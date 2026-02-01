@@ -7,6 +7,7 @@ import com.daijia.customer.client.CustomerInfoFeignClient;
 import com.daijia.customer.service.CustomerService;
 import com.daijia.model.vo.customer.CustomerLoginVo;
 import com.daijia.model.vo.customer.UpdateWxPhoneVo;
+import com.daijia.security.service.TokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

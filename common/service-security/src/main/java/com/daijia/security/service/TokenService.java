@@ -29,7 +29,6 @@ public class TokenService {
      */
     public String createToken(String wxOpenId) {
         String token = jwtTokenProvider.generateToken(wxOpenId);
-        log.debug("为用户创建 Token:{}", wxOpenId);
         return token;
     }
 
@@ -62,32 +61,24 @@ public class TokenService {
     }
 
     /**
-     * 根据 Token 从 JWT 解析 wxOpenId
+     * 根据 Token 从 JWT 解析 wxOpenId,进而获取用户ID
      * @param token
      * @return
      */
-    public Long getCustomerIdByToken(String token) {
+    public Long getIdByToken(String token) {
         // 验证 Token
         if(!validateToken(token)) {
             throw new SecurityException("Token无效或已过期");
         }
-
         String wxOpenId = jwtTokenProvider.getWxOpenIdFromToken(token);
-        Long customerId = customerInfoFeignClient.getCustomerIdByWxOpenId(wxOpenId).getData();
+        Long id = customerInfoFeignClient.getCustomerIdByWxOpenId(wxOpenId).getData();
 
         // 从customer_info表中找不到,就说明要从driver_info表中找
-        if(customerId == null) {
-            customerId  = driverInfoFeignClient.getDriverIdByWxOpenId(wxOpenId).getData();
+        if(id == null) {
+            id  = driverInfoFeignClient.getDriverIdByWxOpenId(wxOpenId).getData();
         }
-        return customerId;
-
-        //LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();
-        //wrapper.eq(CustomerInfo::getWxOpenId, wxOpenId);
-        //CustomerInfo customerInfo = customerInfoMapper.selectOne(wrapper);
-        //if(customerInfo == null) {
-        //    throw new GuiguException(ResultCodeEnum.DATA_ERROR);
-        //}
-        //return customerInfo.getId();
+        log.info("根据 Token 从 JWT 解析 wxOpenId,进而获取用户ID: " + id);
+        return id;
     }
 
     /**

@@ -120,9 +120,15 @@
         </dependency>
         <dependency>
             <groupId>com.daijia</groupId>
-            <artifactId>service-security</artifactId>
+            <artifactId>service-util</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
+        <!--<dependency>-->
+        <!--    <groupId>com.daijia</groupId>-->
+        <!--    <artifactId>service-security</artifactId>-->
+        <!--    <version>1.0.0</version>-->
+        <!--    <scope>compile</scope>-->
+        <!--</dependency>-->
     </dependencies>
 </project>

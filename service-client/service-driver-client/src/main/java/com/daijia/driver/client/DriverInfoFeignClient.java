@@ -13,7 +13,7 @@ public interface DriverInfoFeignClient {
     public Result<String> login(@PathVariable String code);
 
     @GetMapping("/driver/info/getDriverLoginInfo/{driverId}")
-    public Result<DriverLoginVo> getDriverLoginInfo(Long driverId);
+    public Result<DriverLoginVo> getDriverLoginInfo(String token);
 
     @GetMapping("/driver/info/getDriverIdByWxOpenId/{wxOpenId}")
     public Result<Long> getDriverIdByWxOpenId(String wxOpenId);

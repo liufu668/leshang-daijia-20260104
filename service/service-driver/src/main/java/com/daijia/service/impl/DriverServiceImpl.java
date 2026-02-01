@@ -14,7 +14,6 @@ import com.daijia.model.entity.driver.DriverInfo;
 import com.daijia.model.entity.driver.DriverLoginLog;
 import com.daijia.model.vo.customer.CustomerLoginVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
-import com.daijia.security.service.TokenService;
 import com.daijia.service.DriverService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,6 @@ public class DriverServiceImpl extends ServiceImpl<DriverInfoMapper, DriverInfo>
     private final DriverInfoMapper driverInfoMapper;
     private final DriverLoginLogMapper driverLoginLogMapper;
     private final WxMaService wxMaService;
-    private final TokenService tokenService;
 
 
     @Override
@@ -74,13 +72,14 @@ public class DriverServiceImpl extends ServiceImpl<DriverInfoMapper, DriverInfo>
         driverLoginLog.setCreateTime(now);
         driverLoginLogMapper.insert(driverLoginLog);
 
-        String token = tokenService.createToken(openId);
-
-        return token;
+        return driverInfo.getWxOpenId();
     }
 
     @Override
-    public DriverLoginVo getDriverLoginInfo(Long driverId) {
+    public DriverLoginVo getDriverLoginInfo(String token) {
+
+        Long driverId = tokenService.getIdByToken(token);
+
         // 根据用户 ID 查询用户信息
         DriverInfo driverInfo = driverInfoMapper.selectById(driverId);
 

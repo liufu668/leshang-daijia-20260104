@@ -26,7 +26,6 @@ public class CustomerController {
     @Operation(summary = "小程序授权登录")
     @GetMapping("/login/{code}")
     public Result<String> login(@PathVariable String code){
-
         return Result.ok(customerInfoService.login(code));
     }
 

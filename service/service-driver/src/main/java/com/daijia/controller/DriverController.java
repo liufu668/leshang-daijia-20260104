@@ -24,8 +24,8 @@ public class DriverController {
     }
 
     @GetMapping("/getDriverLoginInfo/{driverId}")
-    public Result<DriverLoginVo> getDriverLoginInfo(Long driverId){
-        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(driverId);
+    public Result<DriverLoginVo> getDriverLoginInfo(String token){
+        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(token);
         return Result.ok(driverLoginVo);
     }
 
