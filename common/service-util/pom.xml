@@ -20,7 +20,8 @@
 
     <dependencies>
 
-        <!-- Mybatis-Plus -->
+        <!-- 使用3.5.7版本造成了版本冲突,使用了很长时间排查问题 -->
+        <!--java.lang.IllegalArgumentException: Invalid value type for attribute 'factoryBeanObjectType': java.lang.String-->
         <!--<dependency>-->
         <!--    <groupId>com.baomidou</groupId>-->
         <!--    <artifactId>mybatis-plus-boot-starter</artifactId>-->
@@ -30,15 +31,6 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>3.5.15</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
         </dependency>
         <!-- 服务调用feign -->
         <dependency>

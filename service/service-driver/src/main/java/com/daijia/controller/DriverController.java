@@ -24,14 +24,9 @@ public class DriverController {
     }
 
     @GetMapping("/getDriverLoginInfo/{driverId}")
-    public Result<DriverLoginVo> getDriverLoginInfo(String token){
-        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(token);
+    public Result<DriverLoginVo> getDriverLoginInfo(@PathVariable Long driverId){
+        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(driverId);
         return Result.ok(driverLoginVo);
-    }
-
-    @GetMapping("/getDriverIdByWxOpenId/{wxOpenId}")
-    public Result<Long> getDriverIdByWxOpenId(String wxOpenId){
-        return Result.ok(driverService.getDriverIdByWxOpenId(wxOpenId));
     }
 
 }

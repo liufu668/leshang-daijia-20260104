@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.daijia.common.exception.GuiguException;
 import com.daijia.common.result.ResultCodeEnum;
-import com.daijia.security.service.TokenService;
 import com.daijia.mapper.CustomerInfoMapper;
 import com.daijia.mapper.CustomerLoginLogMapper;
 import com.daijia.model.entity.customer.CustomerInfo;
@@ -36,8 +35,6 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
     private final CustomerLoginLogMapper customerLoginLogMapper;
     private final WxMaService wxMaService;
     private final CustomerInfoMapper customerInfoMapper;
-    private final TokenService tokenService;
-
 
     // 根据openid到数据库查找用户
     @Transactional(rollbackFor = {Exception.class})
@@ -78,9 +75,7 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
         customerLoginLog.setCreateTime(now);
         customerLoginLogMapper.insert(customerLoginLog);
 
-        String token = tokenService.createToken(openId);
-
-        return token;
+        return customerInfo.getWxOpenId();
     }
 
     @Override
@@ -120,39 +115,5 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
         log.info("绑定手机号成功,phone: {}", phone);
 
         return true; // 返回更新成功
-    }
-
-    /**
-     * 根据 customerId获取客户的 wxOpenId
-     * @param customerId
-     * @return
-     */
-    @Override
-    public String getCustomerWxOpenId(Long customerId) {
-        // selectById() 默认会查询所有字段，如果只需要 OpenId，会造成不必要的数据库传输。
-        // 而 Lambada 查询只查所需字段,性能更优
-        LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(CustomerInfo::getId, customerId);
-        CustomerInfo customerInfo = customerInfoMapper.selectOne(wrapper);
-        if(customerInfo == null) {
-            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
-        }
-        return customerInfo.getWxOpenId();
-    }
-
-    /**
-     * 根据 wxOpenId 获取 customerId
-     * @param wxOpenId
-     * @return
-     */
-    @Override
-    public Long getCustomerIdByWxOpenId(String wxOpenId) {
-        LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(CustomerInfo::getWxOpenId, wxOpenId);
-        CustomerInfo customerInfo = customerInfoMapper.selectOne(wrapper);
-        if(customerInfo == null) {
-            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
-        }
-        return customerInfo.getId();
     }
 }

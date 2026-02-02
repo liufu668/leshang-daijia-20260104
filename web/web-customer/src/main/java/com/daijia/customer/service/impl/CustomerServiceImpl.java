@@ -18,17 +18,15 @@ import org.springframework.stereotype.Service;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerInfoFeignClient customerInfoFeignClient;
+    private final TokenService tokenService;
 
     @Override
     public String login(String code) {
         Result<String> loginResult = customerInfoFeignClient.login(code);
 
-        Integer codeResult = loginResult.getCode();
-        if(codeResult != 200) {
-            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
-        }
+        String wxOpenId = loginResult.getData();
 
-        String token = loginResult.getData();
+        String token = tokenService.createToken(wxOpenId);
 
         return token;
     }

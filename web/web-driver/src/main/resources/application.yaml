@@ -1,0 +1,22 @@
+spring:
+  security:
+    # 开启详细错误信息（开发环境）
+    filter:
+      dispatcher-types: async,error,request,forward,include
+
+logging:
+  level:
+    # Spring Security相关日志
+    org.springframework.security: DEBUG
+    org.springframework.security.web: DEBUG
+    org.springframework.security.web.FilterChainProxy: DEBUG
+    org.springframework.security.web.authentication: DEBUG
+    org.springframework.security.web.access: DEBUG
+
+    # 您自己的包
+    com.daijia: DEBUG
+    com.daijia.web.customer: TRACE
+
+    # Web相关
+    org.springframework.web: DEBUG
+    org.springframework.web.filter: DEBUG

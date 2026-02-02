@@ -7,7 +7,6 @@ import com.daijia.model.vo.driver.DriverLoginVo;
 public interface DriverService extends IService<DriverInfo> {
     String login(String code);
 
-    DriverLoginVo getDriverLoginInfo(String token);
+    DriverLoginVo getDriverLoginInfo(Long driverId);
 
-    Long getDriverIdByWxOpenId(String wxOpenId);
 }

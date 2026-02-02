@@ -2,6 +2,7 @@ package com.daijia.security.config;
 
 import com.daijia.security.filter.TokenAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +20,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
+/**
+ * Spring Security的核心配置类
+ */
 @Configuration
 @RequiredArgsConstructor // Lombok:为所有final字段生成构造函数
 @EnableWebSecurity
@@ -26,25 +30,16 @@ public class WebSecurityConfig {
 
     private final TokenAuthenticationFilter tokenAuthenticationFilter;
 
-    //public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-    //    return authConfig.getAuthenticationManager();
-    //}
 
-    /**
-     * 权限认证
-     * @param http
-     * @return
-     * @throws Exception
-     */
-    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
     /**
      * Spring Security 过滤器链配置
      * 定义应用程序的安全规则和认证流程
-     *
-     * @param http HttpSecurity对象，用于配置安全策略
-     * @return 配置好的SecurityFilterChain
-     * @throws Exception 配置过程中可能抛出的异常
      */
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 // 需要跨域支持
@@ -64,11 +59,10 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 放行（允许匿名访问）的请求路径
                         // 通常包括：登录、注册、公开API等不需要认证的接口
-                        .requestMatchers("/customer/**").permitAll()
-                        .requestMatchers("/driver/**").permitAll()
+                        .requestMatchers("/customer/login/**").permitAll()
+                        .requestMatchers("/driver/login/**").permitAll()
 
-                        // 其他所有请求都需要认证
-                        // 此规则必须放在最后，因为它会匹配所有未在前面匹配到的请求
+                        // 其他所有请求都需要认证,登录后可访问
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

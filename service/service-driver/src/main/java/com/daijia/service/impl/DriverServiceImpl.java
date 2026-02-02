@@ -76,10 +76,7 @@ public class DriverServiceImpl extends ServiceImpl<DriverInfoMapper, DriverInfo>
     }
 
     @Override
-    public DriverLoginVo getDriverLoginInfo(String token) {
-
-        Long driverId = tokenService.getIdByToken(token);
-
+    public DriverLoginVo getDriverLoginInfo(Long driverId) {
         // 根据用户 ID 查询用户信息
         DriverInfo driverInfo = driverInfoMapper.selectById(driverId);
 
@@ -88,16 +85,5 @@ public class DriverServiceImpl extends ServiceImpl<DriverInfoMapper, DriverInfo>
         BeanUtils.copyProperties(driverInfo, driverLoginVo);
 
         return driverLoginVo;
-    }
-
-    @Override
-    public Long getDriverIdByWxOpenId(String wxOpenId) {
-        LambdaQueryWrapper<DriverInfo> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(DriverInfo::getWxOpenId, wxOpenId);
-        DriverInfo driverInfo = driverInfoMapper.selectOne(wrapper);
-        if(driverInfo == null) {
-            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
-        }
-        return driverInfo.getId();
     }
 }

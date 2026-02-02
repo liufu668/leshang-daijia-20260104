@@ -17,6 +17,7 @@
     <modules>
         <module>service-customer-client</module>
         <module>service-driver-client</module>
+        <module>service-system-client</module>
     </modules>
 
     <properties>

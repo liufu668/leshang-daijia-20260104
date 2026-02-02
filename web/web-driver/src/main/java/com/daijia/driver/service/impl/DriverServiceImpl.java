@@ -7,11 +7,9 @@ import com.daijia.common.result.ResultCodeEnum;
 //import com.daijia.driver.client.DriverInfoFeignClient;
 import com.daijia.driver.client.DriverInfoFeignClient;
 import com.daijia.driver.service.DriverService;
-import com.daijia.model.vo.customer.CustomerLoginVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
 import com.daijia.security.service.TokenService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,7 +23,7 @@ public class DriverServiceImpl implements DriverService {
     public String login(String code) {
         Result<String> loginResult = driverInfoFeignClient.login(code);
 
-        String wxOpenId = loginResult.getCode();
+        String wxOpenId = loginResult.getData();
 
         String token = tokenService.createToken(wxOpenId);
 
@@ -33,9 +31,11 @@ public class DriverServiceImpl implements DriverService {
     }
 
     @Override
-    public DriverLoginVo getDriverLoginInfo(String token) {
+    public DriverLoginVo getDriverLoginInfo(Long driverId) {
+
+
         // 根据用户ID进行远程调用,返回用户信息
-        Result<DriverLoginVo> driverLoginVoResult = driverInfoFeignClient.getDriverLoginInfo(token);
+        Result<DriverLoginVo> driverLoginVoResult = driverInfoFeignClient.getDriverLoginInfo(driverId);
 
         Integer code = driverLoginVoResult.getCode();
         if(code != 200) {

@@ -5,9 +5,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -18,12 +17,10 @@ import java.io.IOException;
 
 @Slf4j
 @Component
-//@RequiredArgsConstructor
+@RequiredArgsConstructor
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
-    @Lazy
-    @Autowired
-    private TokenService tokenService;
+    private final TokenService tokenService;
 
 
     @Override
@@ -36,11 +33,9 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         log.info("URL: {}", requestURI);
         log.info("方法: {}", method);
         log.info("完整URL: {}?{}", requestURI, request.getQueryString());
-        //
-        //String token = request.getHeader("token");
-        //log.info("拦截器拦截并需要认证的token: {}", token);
 
-
+        String token = request.getHeader("token");
+        log.info("拦截器拦截并需要认证的token: {}", token);
 
         if(token != null && tokenService.validateToken(token)) {
             Long id = tokenService.getIdByToken(token);

@@ -6,5 +6,5 @@ public interface DriverService {
 
     String login(String code);
 
-    DriverLoginVo getDriverLoginInfo(String token);
+    DriverLoginVo getDriverLoginInfo(Long driverId);
 }

@@ -1,0 +1,57 @@
+server:
+  port: 8510
+
+spring:
+  application:
+    name: service-system
+  datasource:
+    url: jdbc:mysql://localhost:3306/daijia_driver?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&useSSL=false
+    username: root
+    password: admin
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      maximum-pool-size: 10
+      minimum-idle: 5
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:  # 如果有密码就填，没有就留空或删除这行
+      database: 0  # 添加这个，默认是0
+      connect-timeout: 2000ms  # 修改timeout的配置名
+      timeout: 2000ms  # 这是lettuce的command-timeout
+      lettuce:
+        pool:
+          enabled: true  # 明确启用连接池
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms  # 添加这个配置
+        shutdown-timeout: 100ms  # 添加关闭超时
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.daijia.model.entity.driver
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    cache-enabled: true
+    lazy-loading-enabled: true
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.daijia: DEBUG
+    com.baomidou.mybatisplus: DEBUG
+    org.springframework.data.redis: DEBUG  # 添加Redis调试日志

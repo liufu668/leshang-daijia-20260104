@@ -2,8 +2,8 @@ package com.daijia.driver.controller;
 
 import com.daijia.common.result.Result;
 import com.daijia.driver.service.DriverService;
-import com.daijia.model.vo.customer.CustomerLoginVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
+import com.daijia.security.service.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +15,14 @@ import org.springframework.security.core.Authentication;
 @Slf4j
 @RestController
 @RequestMapping("/driver")
+
 public class DriverController {
 
     @Autowired
     private DriverService driverService;
+
+    @Autowired
+    private TokenService tokenService;
 
     @Operation(summary = "微信小程序登录")
     @GetMapping("/login/{code}")
@@ -40,7 +44,9 @@ public class DriverController {
     @GetMapping("/getDriverLoginInfo")
     public Result<DriverLoginVo> getDriverLoginInfo(@RequestHeader("token") String token) {
         log.info("获取司机登录信息, 需要验证的token: {}", token);
-        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(token);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long driverId = Long.valueOf(authentication.getName());
+        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(driverId);
         return Result.ok(driverLoginVo);
     }
     //

@@ -1,8 +1,5 @@
 package com.daijia.controller;
 
-
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.daijia.common.exception.GuiguException;
 import com.daijia.common.result.Result;
 import com.daijia.common.result.ResultCodeEnum;
 import com.daijia.model.entity.customer.CustomerInfo;
@@ -40,17 +37,5 @@ public class CustomerController {
     @PostMapping("/updateWxPhoneNumber")
     public Result<Boolean> updateWxPhone(@RequestBody UpdateWxPhoneVo updateWxPhoneVo) {
         return Result.ok(customerInfoService.updateWxPhoneNumber(updateWxPhoneVo));
-    }
-
-    @Operation(summary = "获取客户OpenId")
-    @GetMapping("/getCustomerOpenId/{customerId}")
-    public Result<String> getCustomerOpenId(@PathVariable Long customerId) {
-        return Result.ok(customerInfoService.getCustomerWxOpenId(customerId));
-    }
-
-    @Operation(summary = "获取客户ID")
-    @GetMapping("/getCustomerIdByWxOpenId/{wxOpenId}")
-    public Result<Long> getCustomerIdByWxOpenId(@PathVariable  String wxOpenId) {
-        return Result.ok(customerInfoService.getCustomerIdByWxOpenId(wxOpenId));
     }
 }
