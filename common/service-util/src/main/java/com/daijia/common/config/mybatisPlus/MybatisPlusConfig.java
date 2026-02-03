@@ -1,9 +1,7 @@
 package com.daijia.common.config.mybatisPlus;
 
 
-import com.baomidou.mybatisplus.annotation.DbType;
-import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
-//import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,10 +14,7 @@ import org.springframework.context.annotation.Configuration;
 @MapperScan("com.daijia.mapper")
 public class MybatisPlusConfig {
 
-    ///**
-    // *
-    // * @return
-    // */
+
     //@Bean
     //public MybatisPlusInterceptor optimisticLockerInnerInterceptor(){
     //    MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
@@ -27,5 +22,10 @@ public class MybatisPlusConfig {
     //    interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
     //    return interceptor;
     //}
+
+    /**
+     * MybatisPlus拦截器配置
+     * @return 配置好的拦截器
+     */
 
 }

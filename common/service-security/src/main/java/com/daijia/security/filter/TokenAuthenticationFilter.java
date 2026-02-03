@@ -1,5 +1,6 @@
 package com.daijia.security.filter;
 
+import com.daijia.security.config.JwtTokenProvider;
 import com.daijia.security.service.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,6 +22,7 @@ import java.io.IOException;
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenService tokenService;
+    private final JwtTokenProvider jwtTokenProvider;
 
 
     @Override
@@ -38,10 +40,10 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         log.info("拦截器拦截并需要认证的token: {}", token);
 
         if(token != null && tokenService.validateToken(token)) {
-            Long id = tokenService.getIdByToken(token);
-            log.info("从前端token中解析出来的用户id: " + id);
-            if(id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(id,
+            String wxOpenId = jwtTokenProvider.getWxOpenIdFromToken(token);
+            log.info("从前端token中解析出来的wxOpenId: ", wxOpenId);
+            if(wxOpenId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(wxOpenId,
                         null,
                         null);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -51,9 +53,6 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                 String newToken = tokenService.refreshToken(token);
                 if(newToken != null && !newToken.isEmpty()){
                     // 将新 Token 添加到响应头中
-                    //response.setHeader("new-token", newToken);
-                    //response.setHeader("Access-Control-Expose-Headers", "new-token"); // 允许前端访问
-
                     response.setHeader("token", newToken);
                     response.setHeader("Access-Control-Expose-Headers", "token"); // 允许前端访问
                     log.info("Token已刷新并返回新Token到响应头, newToken: {}", newToken);

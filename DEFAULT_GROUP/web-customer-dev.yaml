@@ -16,7 +16,4 @@ spring:
             readTimeout: 30000
             loggerLevel: basic
 
-app:
-  type: customer
-
 

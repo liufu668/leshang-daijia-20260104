@@ -23,9 +23,9 @@ public class DriverController {
         return Result.ok(driverService.login(code));
     }
 
-    @GetMapping("/getDriverLoginInfo/{driverId}")
-    public Result<DriverLoginVo> getDriverLoginInfo(@PathVariable Long driverId){
-        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(driverId);
+    @GetMapping("/getDriverLoginInfo/{wxOpenId}")
+    public Result<DriverLoginVo> getDriverLoginInfo(@PathVariable String wxOpenId){
+        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(wxOpenId);
         return Result.ok(driverLoginVo);
     }
 

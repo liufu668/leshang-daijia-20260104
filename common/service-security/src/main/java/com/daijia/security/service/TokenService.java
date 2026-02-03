@@ -1,15 +1,6 @@
 package com.daijia.security.service;
 
-
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.daijia.common.exception.GuiguException;
-import com.daijia.common.result.ResultCodeEnum;
-import com.daijia.mapper.CustomerInfoMapper;
-import com.daijia.mapper.DriverInfoMapper;
-import com.daijia.model.entity.customer.CustomerInfo;
-import com.daijia.model.entity.driver.DriverInfo;
 import com.daijia.security.config.JwtTokenProvider;
-import com.daijia.system.client.SysLoginFeignClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,11 +18,6 @@ public class TokenService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, Object> redisTemplate;
     private static final String TOKEN_PREFIX = "auth_token:";
-    private final SysLoginFeignClient sysLoginFeignClient;
-
-    // 应用类型判断,默认是司机端登录
-    @Value("${app.type:driver}")
-    private String appType;
 
     /**
      * 创建Token
@@ -67,34 +53,6 @@ public class TokenService {
     private boolean isTokenBlacklisted(String token) {
         String blacklistKey = TOKEN_PREFIX + token;
         return Boolean.TRUE.equals(redisTemplate.hasKey(blacklistKey));
-    }
-
-    /**
-     * 根据 Token 从 JWT 解析 wxOpenId,进而获取用户ID
-     * @param token
-     * @return
-     */
-
-
-    public Long getIdByToken(String token) {
-        // 验证 Token
-        if(!validateToken(token)) {
-            throw new SecurityException("Token无效或已过期");
-        }
-        String wxOpenId = jwtTokenProvider.getWxOpenIdFromToken(token);
-
-        Long id = null;
-
-        if("driver".equalsIgnoreCase(appType)) {
-            id = sysLoginFeignClient.getDriverIdByWxOpenId(wxOpenId).getData();
-            log.info("司机端登录,根据 Token 从 JWT 解析 wxOpenId,进而查询司机ID");
-
-        }else if("customer".equalsIgnoreCase(appType)) {
-            id = sysLoginFeignClient.getCustomerIdByWxOpenId(wxOpenId).getData();
-            log.info("乘客端登录,根据 Token 从 JWT 解析 wxOpenId,进而查询乘客ID: ", id);
-        }
-
-        return id;
     }
 
     /**

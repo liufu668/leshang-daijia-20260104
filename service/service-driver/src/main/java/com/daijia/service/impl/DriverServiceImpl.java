@@ -3,6 +3,7 @@ package com.daijia.service.impl;
 import cn.binarywang.wx.miniapp.api.WxMaService;
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.daijia.common.exception.GuiguException;
 import com.daijia.common.result.ResultCodeEnum;
@@ -76,9 +77,12 @@ public class DriverServiceImpl extends ServiceImpl<DriverInfoMapper, DriverInfo>
     }
 
     @Override
-    public DriverLoginVo getDriverLoginInfo(Long driverId) {
-        // 根据用户 ID 查询用户信息
-        DriverInfo driverInfo = driverInfoMapper.selectById(driverId);
+    public DriverLoginVo getDriverLoginInfo(String wxOpenId) {
+        // 使用条件构造器查询
+        QueryWrapper<DriverInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("wx_open_id", wxOpenId);
+
+        DriverInfo driverInfo = driverInfoMapper.selectOne(queryWrapper);
 
         DriverLoginVo driverLoginVo = new DriverLoginVo();
         // 复制属性

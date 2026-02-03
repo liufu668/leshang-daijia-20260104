@@ -16,7 +16,6 @@
     <modules>
         <module>service-customer</module>
         <module>service-driver</module>
-        <module>service-system</module>
     </modules>
 
     <properties>

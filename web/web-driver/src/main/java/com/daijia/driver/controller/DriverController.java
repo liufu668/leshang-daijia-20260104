@@ -31,22 +31,14 @@ public class DriverController {
         return Result.ok(driverService.login(code));
     }
 
-    //@Operation(summary = "获取司机登录信息")
-    //@GetMapping("/getDriverLoginInfo")
-    //public Result<DriverLoginVo> getDriverLoginInfo() {
-    //    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    //    Long driverId = Long.valueOf(authentication.getName());
-    //    log.info("获取司机登录信息, driverId: {}", driverId);
-    //    DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(driverId);
-    //    return Result.ok(driverLoginVo);
-    //}
     @Operation(summary = "获取司机登录信息")
     @GetMapping("/getDriverLoginInfo")
     public Result<DriverLoginVo> getDriverLoginInfo(@RequestHeader("token") String token) {
         log.info("获取司机登录信息, 需要验证的token: {}", token);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Long driverId = Long.valueOf(authentication.getName());
-        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(driverId);
+        String wxOpenId = authentication.getName();
+        log.info("从上下文获取到的司机wxOpenId: {}", wxOpenId);
+        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(wxOpenId);
         return Result.ok(driverLoginVo);
     }
     //

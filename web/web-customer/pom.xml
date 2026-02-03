@@ -47,7 +47,6 @@
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
         </dependency>
 
-        <!-- 排除 service-util 中的数据库依赖 -->
         <dependency>
             <groupId>com.daijia</groupId>
             <artifactId>service-util</artifactId>
@@ -67,12 +66,7 @@
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>com.daijia</groupId>
-            <artifactId>service-customer-client</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
+
         <dependency>
             <groupId>com.daijia</groupId>
             <artifactId>service-security</artifactId>

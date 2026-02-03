@@ -63,23 +63,5 @@
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>com.daijia</groupId>
-            <artifactId>service-driver</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.daijia</groupId>
-            <artifactId>service-customer</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.daijia</groupId>
-            <artifactId>service-system-client</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 </project>

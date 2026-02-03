@@ -6,5 +6,5 @@ public interface DriverService {
 
     String login(String code);
 
-    DriverLoginVo getDriverLoginInfo(Long driverId);
+    DriverLoginVo getDriverLoginInfo(String wxOpenId);
 }

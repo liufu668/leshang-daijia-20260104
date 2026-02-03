@@ -12,6 +12,6 @@ public interface DriverInfoFeignClient {
     @GetMapping("/driver/info/login/{code}")
     public Result<String> login(@PathVariable String code);
 
-    @GetMapping("/driver/info/getDriverLoginInfo/{driverId}")
-    public Result<DriverLoginVo> getDriverLoginInfo(@PathVariable Long driverId);
+    @GetMapping("/driver/info/getDriverLoginInfo/{wxOpenId}")
+    public Result<DriverLoginVo> getDriverLoginInfo(@PathVariable String wxOpenId);
 }
