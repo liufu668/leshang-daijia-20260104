@@ -5,6 +5,7 @@ import cn.binarywang.wx.miniapp.api.WxMaService;
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import cn.binarywang.wx.miniapp.bean.WxMaPhoneNumberInfo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.daijia.common.exception.GuiguException;
 import com.daijia.common.result.ResultCodeEnum;
@@ -12,6 +13,7 @@ import com.daijia.mapper.CustomerInfoMapper;
 import com.daijia.mapper.CustomerLoginLogMapper;
 import com.daijia.model.entity.customer.CustomerInfo;
 import com.daijia.model.entity.customer.CustomerLoginLog;
+import com.daijia.model.entity.driver.DriverInfo;
 import com.daijia.model.vo.customer.CustomerLoginVo;
 import com.daijia.model.vo.customer.UpdateWxPhoneVo;
 import com.daijia.service.CustomerInfoService;
@@ -79,10 +81,13 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
     }
 
     @Override
-    public CustomerLoginVo getCustomerInfo(Long customerId) {
-        // 根据用户 ID 查询用户信息
-        CustomerInfo customerInfo = customerInfoMapper.selectById(customerId);
+    public CustomerLoginVo getCustomerInfo(String wxOpenId) {
 
+        // 使用条件构造器查询
+        QueryWrapper<CustomerInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("wx_open_id", wxOpenId);
+
+        CustomerInfo customerInfo = customerInfoMapper.selectOne(queryWrapper);
         // 封装到 CustomerLoginVo
         CustomerLoginVo customerLoginVo = new CustomerLoginVo();
         // 复制属性

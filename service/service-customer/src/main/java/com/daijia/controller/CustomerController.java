@@ -27,9 +27,9 @@ public class CustomerController {
     }
 
     @Operation(summary = "获取客户登录信息")
-    @GetMapping("/getCustomerLoginInfo/{customerId}")
-    public Result<CustomerLoginVo> getCustomerLoginInfo(@PathVariable Long customerId) {
-        CustomerLoginVo customerLoginVo = customerInfoService.getCustomerInfo(customerId);
+    @GetMapping("/getCustomerLoginInfo/{wxOpenId}")
+    public Result<CustomerLoginVo> getCustomerLoginInfo(@PathVariable String wxOpenId) {
+        CustomerLoginVo customerLoginVo = customerInfoService.getCustomerInfo(wxOpenId);
         return Result.ok(customerLoginVo);
     }
 

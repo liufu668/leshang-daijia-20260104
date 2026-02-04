@@ -11,7 +11,7 @@ public interface CustomerInfoService extends IService<CustomerInfo> {
     String login(String code);
 
     // 获取客户登录信息
-    CustomerLoginVo getCustomerInfo(Long customerId);
+    CustomerLoginVo getCustomerInfo(String wxOpenId);
 
     // 更新客户微信手机号码
     Boolean updateWxPhoneNumber(UpdateWxPhoneVo updateWxPhoneVo);

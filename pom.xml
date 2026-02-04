@@ -43,11 +43,6 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>org.projectlombok</groupId>
-				<artifactId>lombok</artifactId>
-				<version>1.18.42</version>
-			</dependency>
-			<dependency>
 				<groupId>org.redisson</groupId>
 				<artifactId>redisson</artifactId>
 				<version>${redisson.version}</version>
@@ -98,6 +93,13 @@
 		</dependencies>
 	</dependencyManagement>
 
+	<dependencies>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
+	</dependencies>
+
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -119,30 +121,4 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-	<!--<build>-->
-	<!--	<plugins>-->
-	<!--		<plugin>-->
-	<!--			<groupId>org.springframework.boot</groupId>-->
-	<!--			<artifactId>spring-boot-maven-plugin</artifactId>-->
-	<!--			<configuration>-->
-	<!--				<excludes>-->
-	<!--					<exclude>-->
-	<!--						<groupId>org.projectlombok</groupId>-->
-	<!--						<artifactId>lombok</artifactId>-->
-	<!--					</exclude>-->
-	<!--				</excludes>-->
-	<!--			</configuration>-->
-	<!--		</plugin>-->
-	<!--		&lt;!&ndash; 编译插件 &ndash;&gt;-->
-	<!--		<plugin>-->
-	<!--			<groupId>org.apache.maven.plugins</groupId>-->
-	<!--			<artifactId>maven-compiler-plugin</artifactId>-->
-	<!--			<configuration>-->
-	<!--				<source>17</source>-->
-	<!--				<target>17</target>-->
-	<!--				<encoding>UTF-8</encoding>-->
-	<!--			</configuration>-->
-	<!--		</plugin>-->
-	<!--	</plugins>-->
-	<!--</build>-->
 </project>

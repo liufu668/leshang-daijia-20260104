@@ -23,9 +23,4 @@ public class MybatisPlusConfig {
     //    return interceptor;
     //}
 
-    /**
-     * MybatisPlus拦截器配置
-     * @return 配置好的拦截器
-     */
-
 }

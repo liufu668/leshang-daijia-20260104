@@ -32,10 +32,10 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerLoginVo getCustomerLoginInfo(Long customerId) {
+    public CustomerLoginVo getCustomerLoginInfo(String wxOpenId) {
 
         // 根据用户ID进行远程调用,返回用户信息
-        Result<CustomerLoginVo> customerLoginVoResult = customerInfoFeignClient.getCustomerLoginInfo(customerId);
+        Result<CustomerLoginVo> customerLoginVoResult = customerInfoFeignClient.getCustomerLoginInfo(wxOpenId);
 
         Integer code = customerLoginVoResult.getCode();
         if(code != 200) {

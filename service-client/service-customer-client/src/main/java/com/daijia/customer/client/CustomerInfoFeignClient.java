@@ -12,8 +12,8 @@ public interface CustomerInfoFeignClient {
     @GetMapping("/customer/info/login/{code}")
     public Result<String> login(@PathVariable String code);
 
-    @GetMapping("/customer/info/getCustomerLoginInfo/{customerId}")
-    Result<CustomerLoginVo> getCustomerLoginInfo(@PathVariable Long customerId);
+    @GetMapping("/customer/info/getCustomerLoginInfo/{wxOpenId}")
+    Result<CustomerLoginVo> getCustomerLoginInfo(@PathVariable String wxOpenId);
 
     @PostMapping("/customer/info/updateWxPhoneNumber")
     Result<Boolean> updateWxPhoneNumber(@RequestBody UpdateWxPhoneVo updateWxPhoneVo);
