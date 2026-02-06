@@ -22,20 +22,20 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public String login(String code) {
-        Result<String> loginResult = customerInfoFeignClient.login(code);
+        Result<Long> loginResult = customerInfoFeignClient.login(code);
 
-        String wxOpenId = loginResult.getData();
+        Long id = loginResult.getData();
 
-        String token = tokenService.createToken(wxOpenId);
+        String token = tokenService.createToken(id);
 
         return token;
     }
 
     @Override
-    public CustomerLoginVo getCustomerLoginInfo(String wxOpenId) {
+    public CustomerLoginVo getCustomerLoginInfo(Long id) {
 
         // 根据用户ID进行远程调用,返回用户信息
-        Result<CustomerLoginVo> customerLoginVoResult = customerInfoFeignClient.getCustomerLoginInfo(wxOpenId);
+        Result<CustomerLoginVo> customerLoginVoResult = customerInfoFeignClient.getCustomerLoginInfo(id);
 
         Integer code = customerLoginVoResult.getCode();
         if(code != 200) {

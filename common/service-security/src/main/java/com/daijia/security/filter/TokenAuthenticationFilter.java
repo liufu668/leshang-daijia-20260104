@@ -40,10 +40,10 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         log.info("拦截器拦截并需要认证的token: {}", token);
 
         if(token != null && tokenService.validateToken(token)) {
-            String wxOpenId = jwtTokenProvider.getWxOpenIdFromToken(token);
-            log.info("从前端token中解析出来的wxOpenId: ", wxOpenId);
-            if(wxOpenId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(wxOpenId,
+            Long id = jwtTokenProvider.getIdFromToken(token);
+            log.info("从前端token中解析出来的ID: ", id);
+            if(id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(id,
                         null,
                         null);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

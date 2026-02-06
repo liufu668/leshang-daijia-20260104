@@ -5,3 +5,11 @@ wechat:
 jwt:
   secret: ${JWT_SECRET}
   expiration-hours: 24
+
+tencent:
+  cloud:
+    secretId: ${TENCENT_SECRETID}
+    secretKey: ${TENCENT_SECRETKEY}
+    region: ap-nanjing
+    bucketPrivate: ${TENCENT_BUCKET}
+    personGroupId: daijia-driver

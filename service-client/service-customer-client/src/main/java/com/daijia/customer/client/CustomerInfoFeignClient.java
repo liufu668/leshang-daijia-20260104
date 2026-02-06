@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.*;
 public interface CustomerInfoFeignClient {
 
     @GetMapping("/customer/info/login/{code}")
-    public Result<String> login(@PathVariable String code);
+    public Result<Long> login(@PathVariable String code);
 
-    @GetMapping("/customer/info/getCustomerLoginInfo/{wxOpenId}")
-    Result<CustomerLoginVo> getCustomerLoginInfo(@PathVariable String wxOpenId);
+    @GetMapping("/customer/info/getCustomerLoginInfo/{id}")
+    Result<CustomerLoginVo> getCustomerLoginInfo(@PathVariable Long id);
 
     @PostMapping("/customer/info/updateWxPhoneNumber")
     Result<Boolean> updateWxPhoneNumber(@RequestBody UpdateWxPhoneVo updateWxPhoneVo);

@@ -2,6 +2,8 @@ package com.daijia.driver.controller;
 
 import com.daijia.common.result.Result;
 import com.daijia.driver.service.DriverService;
+import com.daijia.model.entity.form.driver.UpdateDriverAuthInfoForm;
+import com.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
 import com.daijia.security.service.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,29 +35,27 @@ public class DriverController {
 
     @Operation(summary = "获取司机登录信息")
     @GetMapping("/getDriverLoginInfo")
-    public Result<DriverLoginVo> getDriverLoginInfo(@RequestHeader("token") String token) {
-        log.info("获取司机登录信息, 需要验证的token: {}", token);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String wxOpenId = authentication.getName();
-        log.info("从上下文获取到的司机wxOpenId: {}", wxOpenId);
-        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(wxOpenId);
+    public Result<DriverLoginVo> getDriverLoginInfo() {
+        Long id = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        log.info("从上下文获取到的司机ID: {}", id);
+        DriverLoginVo driverLoginVo = driverService.getDriverLoginInfo(id);
         return Result.ok(driverLoginVo);
     }
+
+    @Operation(summary = "获取司机认证信息")
+    @GetMapping("/getDriverAuthInfo")
+    public Result<DriverAuthInfoVo> getDriverAuthInfo() {
+        Long id = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        return Result.ok(driverService.getDriverAuthInfo(id));
+    }
+
+    @Operation(summary = "更新司机认证信息")
+    @PostMapping("/updateDriverAuthInfo")
+    public Result<Boolean> updateDriverAuthInfo(@RequestBody UpdateDriverAuthInfoForm updateDriverAuthInfoForm) {
+        updateDriverAuthInfoForm.setDriverId(Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName()));
+        return Result.ok(driverService.updateDriverAuthInfo(updateDriverAuthInfoForm));
+    }
     //
-    //@PostMapping("/updateDriverAuthInfo")
-    //public Result updateDriverAuthInfo(@RequestBody ) {
-    //
-    //}
-    //
-    //@GetMapping("/getDriverAuthInfo")
-    //public Result<DriverLoginVo> getDriverAuthInfo() {
-    //
-    //}
-    //
-    //@PostMapping("/updateUserPhoneByWx")
-    //public Result updateUserPhoneByWx(@RequestBody ) {
-    //
-    //}
     //
     //@PostMapping("/creatDriverFaceModel")
     //public Result creatDriverFaceModel(@RequestBody) {

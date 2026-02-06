@@ -6,6 +6,8 @@ import com.daijia.common.result.Result;
 import com.daijia.common.result.ResultCodeEnum;
 import com.daijia.driver.client.DriverInfoFeignClient;
 import com.daijia.driver.service.DriverService;
+import com.daijia.model.entity.form.driver.UpdateDriverAuthInfoForm;
+import com.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
 import com.daijia.security.service.TokenService;
 import lombok.RequiredArgsConstructor;
@@ -20,20 +22,20 @@ public class DriverServiceImpl implements DriverService {
 
     @Override
     public String login(String code) {
-        Result<String> loginResult = driverInfoFeignClient.login(code);
+        Result<Long> loginResult = driverInfoFeignClient.login(code);
 
-        String wxOpenId = loginResult.getData();
+        Long id = loginResult.getData();
 
-        String token = tokenService.createToken(wxOpenId);
+        String token = tokenService.createToken(id);
 
         return token;
     }
 
     @Override
-    public DriverLoginVo getDriverLoginInfo(String wxOpenId) {
+    public DriverLoginVo getDriverLoginInfo(Long id) {
 
         // 根据用户ID进行远程调用,返回用户信息
-        Result<DriverLoginVo> driverLoginVoResult = driverInfoFeignClient.getDriverLoginInfo(wxOpenId);
+        Result<DriverLoginVo> driverLoginVoResult = driverInfoFeignClient.getDriverLoginInfo(id);
 
         Integer code = driverLoginVoResult.getCode();
         if(code != 200) {
@@ -45,5 +47,20 @@ public class DriverServiceImpl implements DriverService {
         }
         // 返回用户信息
         return driverLoginVo;
+    }
+
+    @Override
+    public DriverAuthInfoVo getDriverAuthInfo(Long id) {
+        Result<DriverAuthInfoVo> driverAuthInfoVoResult = driverInfoFeignClient.getDriverAuthInfo(id);
+        DriverAuthInfoVo driverAuthInfoVo = driverAuthInfoVoResult.getData();
+        return driverAuthInfoVo;
+    }
+
+    //更新司机认证信息
+    @Override
+    public Boolean updateDriverAuthInfo(UpdateDriverAuthInfoForm updateDriverAuthInfoForm) {
+        Result<Boolean> booleanResult = driverInfoFeignClient.UpdateDriverAuthInfo(updateDriverAuthInfoForm);
+        Boolean data = booleanResult.getData();
+        return data;
     }
 }

@@ -22,8 +22,8 @@ public class TokenService {
     /**
      * 创建Token
      */
-    public String createToken(String wxOpenId) {
-        String token = jwtTokenProvider.generateToken(wxOpenId);
+    public String createToken(Long id) {
+        String token = jwtTokenProvider.generateToken(id);
         return token;
     }
 
@@ -78,12 +78,12 @@ public class TokenService {
             throw new SecurityException("Token无效,无法刷新!");
         }
         // 从旧 Token 中获取用户信息
-        String wxOpenId = jwtTokenProvider.getWxOpenIdFromToken(token);
+        Long id = jwtTokenProvider.getIdFromToken(token);
         // 将旧 Token 加入黑名单
         blacklistToken(token);
         // 生成新 Token
-        String newToken = jwtTokenProvider.generateToken(wxOpenId);
-        log.info("Token刷新成功,用户wxOpenId:{}", wxOpenId);
+        String newToken = jwtTokenProvider.generateToken(id);
+        log.info("Token刷新成功,用户ID:{}", id);
         return newToken;
     }
 

@@ -33,15 +33,13 @@ public class JwtTokenProvider {
 
     /**
      * 生成 Token
-     * @param wxOpenId
-     * @return
      */
-    public String generateToken(String wxOpenId) {
+    public String generateToken(Long id) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getExpirationHours() * 60 * 60 * 1000);
 
         String token =  Jwts.builder()
-                .setSubject(String.valueOf(wxOpenId))
+                .setSubject(String.valueOf(id))
                 .setId(UUID.randomUUID().toString())  // 添加唯一ID
                 .setIssuedAt(now)                       // 签发时间
                 .setExpiration(expiryDate)              // 过期时间
@@ -71,18 +69,18 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 从 Token 中获取 wxOpenId
+     * 从 Token 中获取 ID
      * @param token
      * @return
      */
-    public String getWxOpenIdFromToken(String token) {
+    public Long getIdFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
 
-        return claims.getSubject();
+        return Long.parseLong(claims.getSubject());
     }
 
     /**

@@ -41,7 +41,7 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
     // 根据openid到数据库查找用户
     @Transactional(rollbackFor = {Exception.class})
     @Override
-    public String login(String code){
+    public Long login(String code){
         // 使用微信工具包对象,通过 code 获取微信唯一标识 openId
         String openId = null;
         try {
@@ -77,17 +77,12 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
         customerLoginLog.setCreateTime(now);
         customerLoginLogMapper.insert(customerLoginLog);
 
-        return customerInfo.getWxOpenId();
+        return customerInfo.getId();
     }
 
     @Override
-    public CustomerLoginVo getCustomerInfo(String wxOpenId) {
-
-        // 使用条件构造器查询
-        QueryWrapper<CustomerInfo> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("wx_open_id", wxOpenId);
-
-        CustomerInfo customerInfo = customerInfoMapper.selectOne(queryWrapper);
+    public CustomerLoginVo getCustomerInfo(Long id) {
+        CustomerInfo customerInfo = customerInfoMapper.selectById(id);
         // 封装到 CustomerLoginVo
         CustomerLoginVo customerLoginVo = new CustomerLoginVo();
         // 复制属性
