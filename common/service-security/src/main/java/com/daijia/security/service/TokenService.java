@@ -73,35 +73,37 @@ public class TokenService {
      * 刷新 Token 过期时间
      * @param token
      */
-    public String refreshToken(String token) {
-        if(!jwtTokenProvider.validateToken(token)) {
-            throw new SecurityException("Token无效,无法刷新!");
-        }
-        // 从旧 Token 中获取用户信息
-        Long id = jwtTokenProvider.getIdFromToken(token);
-        // 将旧 Token 加入黑名单
-        blacklistToken(token);
-        // 生成新 Token
-        String newToken = jwtTokenProvider.generateToken(id);
-        log.info("Token刷新成功,用户ID:{}", id);
-        return newToken;
-    }
+    //public String refreshToken(String token) {
+    //    if(!jwtTokenProvider.validateToken(token)) {
+    //        throw new SecurityException("Token无效,无法刷新!");
+    //    }
+    //    // 从旧 Token 中获取用户信息
+    //    Long id = jwtTokenProvider.getIdFromToken(token);
+    //    //// 将旧 Token 加入黑名单
+    //    //blacklistToken(token);
+    //    //// 生成新 Token
+    //    //String newToken = jwtTokenProvider.generateToken(id);
+    //    log.info("Token过期时间刷新成功,用户ID:{}", id);
+    //    return token;
+    //}
 
     /**
      * 将 Token 加入 Redis 黑名单
      * @param token
      */
     private void blacklistToken(String token) {
-        if(jwtTokenProvider.validateToken(token)) {
-            Date expiration = jwtTokenProvider.getExpirationDateFromToken(token);
-            long ttl = expiration.getTime() - System.currentTimeMillis();
-            if(ttl > 0) {
-                String blacklistKey = TOKEN_PREFIX + token;
-                redisTemplate.opsForValue().set(blacklistKey, "blacklisted", ttl, TimeUnit.MILLISECONDS);
-                log.info("Token加入黑名单,剩余有效期:{}秒", ttl);
-            }
-        }
-        log.info("Token已过期,无需加入黑名单");
+        //if(jwtTokenProvider.validateToken(token)) {
+            //Date expiration = jwtTokenProvider.getExpirationDateFromToken(token);
+            //long ttl = expiration.getTime() - System.currentTimeMillis();
+            //if(ttl > 0) {
+            //    String blacklistKey = TOKEN_PREFIX + token;
+            //    redisTemplate.opsForValue().set(blacklistKey, "blacklisted", ttl, TimeUnit.MILLISECONDS);
+            //    log.info("Token加入黑名单,剩余有效期:{}秒", ttl);
+            //}
+        //}
+        String blacklistKey = TOKEN_PREFIX + token;
+        redisTemplate.opsForValue().set(blacklistKey, "blacklisted");
+        log.info("Token已加入黑名单");
     }
 
     /**

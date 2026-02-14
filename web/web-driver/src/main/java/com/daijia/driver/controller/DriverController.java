@@ -2,6 +2,7 @@ package com.daijia.driver.controller;
 
 import com.daijia.common.result.Result;
 import com.daijia.driver.service.DriverService;
+import com.daijia.model.entity.form.driver.DriverFaceModelForm;
 import com.daijia.model.entity.form.driver.UpdateDriverAuthInfoForm;
 import com.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
@@ -22,9 +23,6 @@ public class DriverController {
 
     @Autowired
     private DriverService driverService;
-
-    @Autowired
-    private TokenService tokenService;
 
     @Operation(summary = "微信小程序登录")
     @GetMapping("/login/{code}")
@@ -55,20 +53,10 @@ public class DriverController {
         updateDriverAuthInfoForm.setDriverId(Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName()));
         return Result.ok(driverService.updateDriverAuthInfo(updateDriverAuthInfoForm));
     }
-    //
-    //
-    //@PostMapping("/creatDriverFaceModel")
-    //public Result creatDriverFaceModel(@RequestBody) {
-    //
-    //}
-    //
-    //@PostMapping("/verifyDriverFace")
-    //public Result verifyDriverFace(@RequestBody) {
-    //
-    //}
-    //
-    //@GetMapping("/isFaceRecognition")
-    //public Result<Boolean> isFaceRecognition() {
-    //
-    //}
+    @Operation(summary = "创建司机人脸模型")
+    @PostMapping("/creatDriverFaceModel")
+    public Result<Boolean> creatDriverFaceModel(@RequestBody DriverFaceModelForm driverFaceModelForm) {
+        driverFaceModelForm.setDriverId(Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName()));
+        return Result.ok(driverService.creatDriverFaceModel(driverFaceModelForm));
+    }
 }

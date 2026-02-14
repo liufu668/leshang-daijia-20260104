@@ -2,6 +2,7 @@ package com.daijia.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.daijia.model.entity.driver.DriverInfo;
+import com.daijia.model.entity.form.driver.DriverFaceModelForm;
 import com.daijia.model.entity.form.driver.UpdateDriverAuthInfoForm;
 import com.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
@@ -17,5 +18,9 @@ public interface DriverService extends IService<DriverInfo> {
 
     //更新司机认证信息
     Boolean updateDriverAuthInfo(UpdateDriverAuthInfoForm updateDriverAuthInfoForm);
+
+    //创建司机人脸模型
+    Boolean creatDriverFaceModel(DriverFaceModelForm driverFaceModelForm);
+
 
 }

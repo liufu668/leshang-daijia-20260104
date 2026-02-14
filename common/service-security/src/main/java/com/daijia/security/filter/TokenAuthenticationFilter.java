@@ -49,14 +49,14 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                // 刷新 Token 过期时间
-                String newToken = tokenService.refreshToken(token);
-                if(newToken != null && !newToken.isEmpty()){
-                    // 将新 Token 添加到响应头中
-                    response.setHeader("token", newToken);
-                    response.setHeader("Access-Control-Expose-Headers", "token"); // 允许前端访问
-                    log.info("Token已刷新并返回新Token到响应头, newToken: {}", newToken);
-                }
+                //// 刷新 Token 过期时间
+                //String newToken = tokenService.refreshToken(token);
+                //if(newToken != null && !newToken.isEmpty()){
+                //    // 将新 Token 添加到响应头中
+                //    response.setHeader("token", newToken);
+                //    response.setHeader("Access-Control-Expose-Headers", "token"); // 允许前端访问
+                //    log.info("Token已刷新并返回新Token到响应头, newToken: {}", newToken);
+                //}
             }
         }
 

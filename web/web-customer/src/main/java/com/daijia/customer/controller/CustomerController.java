@@ -27,8 +27,8 @@ public class CustomerController {
     @GetMapping("/getCustomerLoginInfo")
     public Result<CustomerLoginVo> getCustomerLoginInfo() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String wxOpenId = authentication.getName();
-        CustomerLoginVo customerLoginVo = customerInfoService.getCustomerLoginInfo(wxOpenId);
+        Long id = Long.valueOf(authentication.getName());
+        CustomerLoginVo customerLoginVo = customerInfoService.getCustomerLoginInfo(id);
         return Result.ok(customerLoginVo);
     }
 

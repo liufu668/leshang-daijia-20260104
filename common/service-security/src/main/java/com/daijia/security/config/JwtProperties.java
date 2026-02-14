@@ -11,7 +11,8 @@ public class JwtProperties {
 
     private String secret = "default-value";
 
-    private Long expirationHours = 24L;
+    // 永不过期
+    private Long expirationHours = 0L;
 
     // 工具方法:获取毫秒数
     //public long getExpirationMillis() {

@@ -83,17 +83,17 @@ public class JwtTokenProvider {
         return Long.parseLong(claims.getSubject());
     }
 
-    /**
-     * 获取 Token 过期时间
-     * @param token
-     * @return
-     */
-    public Date getExpirationDateFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.getExpiration();
-    }
+    ///**
+    // * 获取 Token 过期时间
+    // * @param token
+    // * @return
+    // */
+    //public Date getExpirationDateFromToken(String token) {
+    //    Claims claims = Jwts.parserBuilder()
+    //            .setSigningKey(getSigningKey())
+    //            .build()
+    //            .parseClaimsJws(token)
+    //            .getBody();
+    //    return claims.getExpiration();
+    //}
 }

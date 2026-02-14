@@ -22,14 +22,14 @@ public class CustomerController {
 
     @Operation(summary = "小程序授权登录")
     @GetMapping("/login/{code}")
-    public Result<String> login(@PathVariable String code){
+    public Result<Long> login(@PathVariable String code){
         return Result.ok(customerInfoService.login(code));
     }
 
     @Operation(summary = "获取客户登录信息")
-    @GetMapping("/getCustomerLoginInfo/{wxOpenId}")
-    public Result<CustomerLoginVo> getCustomerLoginInfo(@PathVariable String wxOpenId) {
-        CustomerLoginVo customerLoginVo = customerInfoService.getCustomerInfo(wxOpenId);
+    @GetMapping("/getCustomerLoginInfo/{id}")
+    public Result<CustomerLoginVo> getCustomerLoginInfo(@PathVariable Long id) {
+        CustomerLoginVo customerLoginVo = customerInfoService.getCustomerInfo(id);
         return Result.ok(customerLoginVo);
     }
 
