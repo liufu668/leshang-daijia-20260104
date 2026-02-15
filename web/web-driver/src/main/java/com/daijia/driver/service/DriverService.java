@@ -1,7 +1,7 @@
 package com.daijia.driver.service;
 
-import com.daijia.model.entity.form.driver.DriverFaceModelForm;
-import com.daijia.model.entity.form.driver.UpdateDriverAuthInfoForm;
+import com.daijia.model.form.driver.DriverFaceModelForm;
+import com.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
 

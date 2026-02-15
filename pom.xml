@@ -33,6 +33,10 @@
 		<weixin.miniapp.version>4.5.5.B</weixin.miniapp.version>
 		<mysql.version>8.3.0</mysql.version>
 		<redisson.version>3.23.3</redisson.version>
+		<fastjson.version>2.0.41</fastjson.version>
+		<drools.version>8.41.0.Final</drools.version>
+		<jodatime.version>2.10.1</jodatime.version>
+
 
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
@@ -42,6 +46,42 @@
 	<!-- 关键：依赖版本管理 -->
 	<dependencyManagement>
 		<dependencies>
+
+			<!--日期时间工具-->
+			<dependency>
+				<groupId>joda-time</groupId>
+				<artifactId>joda-time</artifactId>
+				<version>${jodatime.version}</version>
+			</dependency>
+
+			<!-- drools lib 规则引擎-->
+			<dependency>
+				<groupId>org.drools</groupId>
+				<artifactId>drools-core</artifactId>
+				<version>${drools.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.drools</groupId>
+				<artifactId>drools-compiler</artifactId>
+				<version>${drools.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.drools</groupId>
+				<artifactId>drools-decisiontables</artifactId>
+				<version>${drools.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.drools</groupId>
+				<artifactId>drools-mvel</artifactId>
+				<version>${drools.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.alibaba</groupId>
+				<artifactId>fastjson</artifactId>
+				<version>${fastjson.version}</version>
+			</dependency>
+
 			<dependency>
 				<groupId>org.redisson</groupId>
 				<artifactId>redisson</artifactId>

@@ -17,6 +17,9 @@
     <modules>
         <module>service-customer-client</module>
         <module>service-driver-client</module>
+        <module>service-order-client</module>
+        <module>service-map-client</module>
+        <module>service-rules-client</module>
     </modules>
 
     <properties>

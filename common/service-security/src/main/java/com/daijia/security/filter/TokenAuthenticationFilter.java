@@ -41,7 +41,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
         if(token != null && tokenService.validateToken(token)) {
             Long id = jwtTokenProvider.getIdFromToken(token);
-            log.info("从前端token中解析出来的ID: ", id);
+            //log.info("从前端token中解析出来的ID: ", id);
             if(id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(id,
                         null,

@@ -1,8 +1,8 @@
 package com.daijia.controller;
 
 import com.daijia.common.result.Result;
-import com.daijia.model.entity.form.driver.DriverFaceModelForm;
-import com.daijia.model.entity.form.driver.UpdateDriverAuthInfoForm;
+import com.daijia.model.form.driver.DriverFaceModelForm;
+import com.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
 import com.daijia.service.DriverService;

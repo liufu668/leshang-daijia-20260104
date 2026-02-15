@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
  *
  */
 @Configuration
-@MapperScan("com.daijia.mapper")
+@MapperScan("com.daijia.*.mapper")
 public class MybatisPlusConfig {
 
 

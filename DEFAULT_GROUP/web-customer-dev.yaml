@@ -15,5 +15,8 @@ spring:
             connectTimeout: 30000
             readTimeout: 30000
             loggerLevel: basic
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
 
 
