@@ -3,6 +3,7 @@ package com.daijia.customer.controller;
 import com.daijia.common.result.Result;
 import com.daijia.customer.service.OrderService;
 import com.daijia.model.form.customer.ExpectOrderForm;
+import com.daijia.model.form.customer.SubmitOrderForm;
 import com.daijia.model.form.map.CalculateDrivingLineForm;
 import com.daijia.model.vo.customer.ExpectOrderVo;
 import com.daijia.model.vo.map.DrivingLineVo;
@@ -40,5 +41,20 @@ public class OrderController {
     @PostMapping("/expectOrder")
     public Result<ExpectOrderVo> expectOrder(@RequestBody ExpectOrderForm expectOrderForm) {
         return Result.ok(orderService.expectOrder(expectOrderForm));
+    }
+
+    @Operation(summary = "乘客下单")
+    @PostMapping("/submitOrder")
+    public Result<Long> submitOrder(@RequestBody SubmitOrderForm submitOrderForm) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long customerId = Long.valueOf(authentication.getName());
+        submitOrderForm.setCustomerId(customerId);
+        return Result.ok(orderService.submitOrder(submitOrderForm));
+    }
+
+    @Operation(summary = "查询订单状态")
+    @GetMapping("/getOrderStatus/{orderId}")
+    public Result<Integer> getOrderStatus(@PathVariable Long orderId) {
+        return Result.ok(orderService.getOrderStatus(orderId));
     }
 }

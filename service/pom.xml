@@ -19,6 +19,7 @@
         <module>service-order</module>
         <module>service-map</module>
         <module>service-rules</module>
+        <module>service-dispatch</module>
     </modules>
 
     <properties>
@@ -26,6 +27,13 @@
     </properties>
 
     <dependencies>
+
+        <!-- redisson -->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+        </dependency>
+
         <!-- Feign 服务调用 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -64,6 +72,24 @@
         <dependency>
             <groupId>com.daijia</groupId>
             <artifactId>service-util</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.daijia</groupId>
+            <artifactId>service-driver-client</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.daijia</groupId>
+            <artifactId>service-order-client</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.daijia</groupId>
+            <artifactId>service-map-client</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>

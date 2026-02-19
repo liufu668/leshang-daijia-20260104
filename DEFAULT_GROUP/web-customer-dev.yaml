@@ -15,6 +15,22 @@ spring:
             connectTimeout: 30000
             readTimeout: 30000
             loggerLevel: basic
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:  # 如果有密码就填，没有就留空或删除这行
+      database: 0  # 添加这个，默认是0
+      connect-timeout: 2000 # ms  # 修改timeout的配置名
+      timeout: 2000 # ms  # 这是lettuce的command-timeout
+      lettuce:
+        pool:
+          enabled: true  # 明确启用连接池
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1 # ms  # 添加这个配置
+        shutdown-timeout: 100 # ms  # 添加关闭超时
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8

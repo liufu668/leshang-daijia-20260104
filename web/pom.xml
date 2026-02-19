@@ -81,19 +81,32 @@
         </dependency>
         <dependency>
             <groupId>com.daijia</groupId>
-            <artifactId>service-driver-client</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.daijia</groupId>
             <artifactId>service-customer-client</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>com.daijia</groupId>
             <artifactId>service-order-client</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.daijia</groupId>
+            <artifactId>service-map-client</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.daijia</groupId>
+            <artifactId>service-rules-client</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.daijia</groupId>
+            <artifactId>service-dispatch-client</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>

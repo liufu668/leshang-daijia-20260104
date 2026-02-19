@@ -12,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"unchecked", "rawtypes"})
 public class OcrServiceImpl implements OcrService {
 
     private final OcrFeignClient ocrFeignClient;

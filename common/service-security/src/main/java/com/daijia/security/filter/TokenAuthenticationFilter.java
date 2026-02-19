@@ -34,7 +34,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         log.info("=== 拦截器收到请求 ===");
         log.info("URL: {}", requestURI);
         log.info("方法: {}", method);
-        log.info("完整URL: {}?{}", requestURI, request.getQueryString());
+        //log.info("完整URL: {}?{}", requestURI, request.getQueryString());
 
         String token = request.getHeader("token");
         log.info("拦截器拦截并需要认证的token: {}", token);

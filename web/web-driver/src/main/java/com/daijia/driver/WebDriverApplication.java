@@ -13,7 +13,13 @@ import org.springframework.context.annotation.ComponentScan;
         SecurityAutoConfiguration.class
 })//取消数据源自动配置和security自动配置
 @EnableDiscoveryClient
-@EnableFeignClients
+@EnableFeignClients(basePackages = {
+        "com.daijia.map.client",
+        "com.daijia.driver.client",
+        "com.daijia.order.client",
+        "com.daijia.dispatch.client"
+
+})
 @ComponentScan(basePackages = {
         "com.daijia.security", //service-security模块
         "com.daijia.common", // service-util模块

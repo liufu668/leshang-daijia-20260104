@@ -3,6 +3,7 @@ package com.daijia.model.entity.order;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.daijia.model.entity.base.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -32,7 +33,7 @@ public class OrderInfo extends BaseEntity {
     @TableField("start_point_longitude")
     private BigDecimal startPointLongitude;
 
-    @Schema(description = "起始点伟度")
+    @Schema(description = "起始点纬度")
     @TableField("start_point_latitude")
     private BigDecimal startPointLatitude;
 
@@ -74,22 +75,27 @@ public class OrderInfo extends BaseEntity {
 
     @Schema(description = "司机接单时间")
     @TableField("accept_time")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "GMT+8")
     private Date acceptTime;
 
     @Schema(description = "司机到达时间")
     @TableField("arrive_time")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "GMT+8")
     private Date arriveTime;
 
     @Schema(description = "开始服务时间")
     @TableField("start_service_time")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "GMT+8")
     private Date startServiceTime;
 
     @Schema(description = "结束服务时间")
     @TableField("end_service_time")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "GMT+8")
     private Date endServiceTime;
 
     @Schema(description = "微信付款时间")
     @TableField("pay_time")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "GMT+8")
     private Date payTime;
 
     @Schema(description = "订单取消规则ID")

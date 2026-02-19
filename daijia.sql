@@ -213,26 +213,6 @@ CREATE TABLE `undo_log` (
 # Data for table "undo_log"
 #
 
-#
-# Structure for table "xxl_job_log"
-#
-
-CREATE TABLE `xxl_job_log` (
-  `id` bigint(11) NOT NULL AUTO_INCREMENT,
-  `job_id` bigint(11) NOT NULL DEFAULT '0' COMMENT '任务id',
-  `status` int(11) NOT NULL DEFAULT '1' COMMENT '任务状态    0：失败    1：成功',
-  `error` text COMMENT '失败信息',
-  `times` int(11) NOT NULL DEFAULT '0' COMMENT '耗时(单位：毫秒)',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `is_deleted` tinyint(3) NOT NULL DEFAULT '0' COMMENT '删除标记（0:不可用 1:可用）',
-  PRIMARY KEY (`id`),
-  KEY `idx_job_id` (`job_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-#
-# Data for table "xxl_job_log"
-#
 
 #
 # Database "daijia_driver"

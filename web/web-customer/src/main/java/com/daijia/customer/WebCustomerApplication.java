@@ -17,7 +17,8 @@ import org.springframework.context.annotation.ComponentScan;
         "com.daijia.order.client",
         "com.daijia.customer.client",
         "com.daijia.map.client",
-        "com.daijia.rules.client"
+        "com.daijia.rules.client",
+        "com.daijia.dispatch.client"
 })
 @ComponentScan(basePackages = {
         "com.daijia.security", //service-security模块

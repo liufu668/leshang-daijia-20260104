@@ -1,6 +1,7 @@
 package com.daijia.customer.service;
 
 import com.daijia.model.form.customer.ExpectOrderForm;
+import com.daijia.model.form.customer.SubmitOrderForm;
 import com.daijia.model.form.map.CalculateDrivingLineForm;
 import com.daijia.model.vo.customer.ExpectOrderVo;
 import com.daijia.model.vo.map.DrivingLineVo;
@@ -15,5 +16,11 @@ public interface OrderService {
 
     //预估订单数据
     ExpectOrderVo expectOrder(ExpectOrderForm expectOrderForm);
+
+    //乘客下单
+    Long submitOrder(SubmitOrderForm submitOrderForm);
+
+    //查询订单状态
+    Integer getOrderStatus(Long orderId);
 
 }

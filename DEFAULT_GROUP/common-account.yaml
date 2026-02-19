@@ -4,5 +4,4 @@ wechat:
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration-hours: 0
-
+  expiration-hours: 24

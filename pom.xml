@@ -24,6 +24,7 @@
 		<module>service</module>
 		<module>service-client</module>
 		<module>web</module>
+		<module>xxl-job-master</module>
 	</modules>
 
 	<properties>
@@ -32,10 +33,13 @@
 		<spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>
 		<weixin.miniapp.version>4.5.5.B</weixin.miniapp.version>
 		<mysql.version>8.3.0</mysql.version>
-		<redisson.version>3.23.3</redisson.version>
 		<fastjson.version>2.0.41</fastjson.version>
 		<drools.version>8.41.0.Final</drools.version>
 		<jodatime.version>2.10.1</jodatime.version>
+		<redisson.version>3.27.2</redisson.version>
+		<knife4j.version>4.1.0</knife4j.version>
+		<xxl-job.version>2.4.0</xxl-job.version>
+
 
 
 		<maven.compiler.source>17</maven.compiler.source>
@@ -46,6 +50,27 @@
 	<!-- 关键：依赖版本管理 -->
 	<dependencyManagement>
 		<dependencies>
+
+			<!-- xxl-job -->
+			<dependency>
+				<groupId>com.xuxueli</groupId>
+				<artifactId>xxl-job-core</artifactId>
+				<version>${xxl-job.version}</version>
+			</dependency>
+
+			<!-- swagger -->
+			<dependency>
+				<groupId>com.github.xiaoymin</groupId>
+				<artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+				<version>${knife4j.version}</version>
+			</dependency>
+
+			<!-- redisson -->
+			<dependency>
+				<groupId>org.redisson</groupId>
+				<artifactId>redisson</artifactId>
+				<version>${redisson.version}</version>
+			</dependency>
 
 			<!--日期时间工具-->
 			<dependency>
@@ -80,12 +105,6 @@
 				<groupId>com.alibaba</groupId>
 				<artifactId>fastjson</artifactId>
 				<version>${fastjson.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.redisson</groupId>
-				<artifactId>redisson</artifactId>
-				<version>${redisson.version}</version>
 			</dependency>
 
 			<dependency>
@@ -138,6 +157,8 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 		</dependency>
+
+
 	</dependencies>
 
 	<build>
