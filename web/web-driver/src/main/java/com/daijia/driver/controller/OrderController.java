@@ -2,6 +2,7 @@ package com.daijia.driver.controller;
 
 import com.daijia.common.result.Result;
 import com.daijia.driver.service.OrderService;
+import com.daijia.model.vo.order.CurrentOrderInfoVo;
 import com.daijia.model.vo.order.NewOrderDataVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,7 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderController {
 
-    private OrderService orderService;
+    private final OrderService orderService;
 
     @Operation(summary = "查询订单状态")
     @GetMapping("/getOrderStatus/{orderId}")
@@ -33,6 +34,21 @@ public class OrderController {
     public Result<List<NewOrderDataVo>> findNewOrderQueueData() {
         Long driverId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
         return Result.ok(orderService.findNewOrderQueueData(driverId));
+    }
+
+
+    @Operation(summary = "司机端查找当前订单")
+    @GetMapping("/searchDriverCurrentOrder")
+    public Result<CurrentOrderInfoVo> searchDriverCurrentOrder() {
+        Long driverId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        return Result.ok(orderService.searchDriverCurrentOrder(driverId));
+    }
+
+    @Operation(summary = "司机抢单")
+    @GetMapping("/robNewOrder/{orderId}")
+    public Result<Boolean> robNewOrder(@PathVariable Long orderId) {
+        Long driverId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        return Result.ok(orderService.robNewOrder(driverId, orderId));
     }
 
 }

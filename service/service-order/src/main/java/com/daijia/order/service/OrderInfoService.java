@@ -16,4 +16,9 @@ public interface OrderInfoService  extends IService<OrderInfo> {
     //根据订单id获取订单状态
     Integer getOrderStatus(Long orderId);
 
+    CurrentOrderInfoVo searchDriverCurrentOrder(Long driverId);
+
+    //司机抢单
+    Boolean robNewOrder(Long driverId, Long orderId);
+
 }

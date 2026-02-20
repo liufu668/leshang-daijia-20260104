@@ -123,6 +123,10 @@ public class DriverInfo extends BaseEntity {
     @TableField("score")
     private BigDecimal score;
 
+    //0: 未认证
+    //1: 审核中
+    //2: 认证通过
+    //-1: 认证未通过
     @Schema(description = "认证状态")
     @TableField("auth_status")
     private Integer authStatus;
