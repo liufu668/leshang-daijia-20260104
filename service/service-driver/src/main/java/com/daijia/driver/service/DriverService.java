@@ -6,6 +6,7 @@ import com.daijia.model.entity.driver.DriverSet;
 import com.daijia.model.form.driver.DriverFaceModelForm;
 import com.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.daijia.model.vo.driver.DriverAuthInfoVo;
+import com.daijia.model.vo.driver.DriverInfoVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
 
 public interface DriverService extends IService<DriverInfo> {
@@ -34,5 +35,10 @@ public interface DriverService extends IService<DriverInfo> {
 
     ////更新接单状态
     Boolean updateServiceStatus(Long driverId, Integer status);
+
+    //获取司机基本信息
+    DriverInfoVo getDriverInfoOrder(Long driverId);
+
+    String getDriverOpenId(Long driverId);
 
 }

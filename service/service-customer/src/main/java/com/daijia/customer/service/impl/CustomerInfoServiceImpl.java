@@ -111,4 +111,14 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
 
         return true; // 返回更新成功
     }
+
+    // 调用微信支付的API的时候需要分别提供司机和乘客的OpenId
+    @Override
+    public String getCustomerOpenId(Long customerId) {
+        LambdaQueryWrapper<CustomerInfo> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CustomerInfo::getId,customerId);
+        CustomerInfo customerInfo = customerInfoMapper.selectOne(wrapper);
+        return customerInfo.getWxOpenId();
+    }
+
 }

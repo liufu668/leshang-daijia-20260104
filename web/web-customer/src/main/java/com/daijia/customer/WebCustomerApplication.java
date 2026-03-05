@@ -18,12 +18,15 @@ import org.springframework.context.annotation.ComponentScan;
         "com.daijia.customer.client",
         "com.daijia.map.client",
         "com.daijia.rules.client",
-        "com.daijia.dispatch.client"
+        "com.daijia.dispatch.client",
+        "com.daijia.driver.client",
+        "com.daijia.payment.client",
+        "com.daijia.coupon.client"
 })
 @ComponentScan(basePackages = {
         "com.daijia.security", //service-security模块
         "com.daijia.common", // service-util模块
-        "com.daijia.customer" //当前模块
+        "com.daijia.customer", //当前模块
 })
 public class WebCustomerApplication {
     public static void main(String[] args) {

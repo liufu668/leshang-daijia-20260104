@@ -33,7 +33,7 @@ public class NewOrderServiceImpl implements NewOrderService {
     private final RedisTemplate redisTemplate;
 
 
-    //创建并启动任务调度方法
+    //调用调度中心创建并启动任务
     @Override
     public Long addAndStartTask(NewOrderTaskVo newOrderTaskVo) {
         //1 判断当前订单是否启动任务调度
@@ -66,7 +66,7 @@ public class NewOrderServiceImpl implements NewOrderService {
     //执行任务：搜索附近代驾司机
     @Override
     public void executeTask(long jobId) {
-        //1 根据jobid查询数据库，当前任务是否已经创建
+        //1 根据jobId查询数据库，当前任务是否已经创建
         //如果没有创建，不往下执行了
         LambdaQueryWrapper<OrderJob> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(OrderJob::getJobId,jobId);
@@ -107,11 +107,22 @@ public class NewOrderServiceImpl implements NewOrderService {
             String repeatKey =
                     RedisConstant.DRIVER_ORDER_REPEAT_LIST+newOrderTaskVo.getOrderId();
             //记录司机id，防止重复推送
+            /**
+             * 用Redis Set而不是普通Set的原因是：
+             *
+             * 分布式环境：多个服务实例需要共享数据
+             * 状态持久：防止服务重启导致数据丢失
+             * 原子操作：避免并发推送冲突
+             * 自动过期：简化代码，避免内存泄漏
+             * 扩展性：Redis可以横向扩展，支持更大规模
+             *
+             * 所以分布式系统中，需要这种集中式的存储方案
+             */
             Boolean isMember = redisTemplate.opsForSet().isMember(repeatKey, driver.getDriverId());
             if(!isMember) {
                 //把订单信息推送给满足条件多个司机
                 redisTemplate.opsForSet().add(repeatKey,driver.getDriverId());
-                //过期时间：15分钟，超过15分钟没有接单自动取消
+                // 已推送过的司机ID队列过期时间：15分钟，超过15分钟没有接单自动取消
                 redisTemplate.expire(repeatKey,
                         RedisConstant.DRIVER_ORDER_REPEAT_LIST_EXPIRES_TIME,
                         TimeUnit.MINUTES);
@@ -126,7 +137,7 @@ public class NewOrderServiceImpl implements NewOrderService {
                 newOrderDataVo.setFavourFee(newOrderTaskVo.getFavourFee());
                 newOrderDataVo.setDistance(driver.getDistance());
                 newOrderDataVo.setCreateTime(newOrderTaskVo.getCreateTime());
-                //新订单保存司机的临时队列，Redis里面List集合
+                //新订单保存到司机的临时队列，Redis里面List集合
                 String key = RedisConstant.DRIVER_ORDER_TEMP_LIST+driver.getDriverId();
                 redisTemplate.opsForList().leftPush(key,JSONObject.toJSONString(newOrderDataVo));
                 //过期时间：1分钟
@@ -149,17 +160,6 @@ public class NewOrderServiceImpl implements NewOrderService {
             }
         }
         return list;
-        //        List<NewOrderDataVo> list = new ArrayList<>();
-        //        String key = RedisConstant.DRIVER_ORDER_TEMP_LIST + driverId;
-        //        Long size = redisTemplate.opsForList().size(key);
-        //        if(size > 0) {
-        //            for (int i = 0; i < size; i++) {
-        //                String content = (String)redisTemplate.opsForList().leftPop(key);
-        //                NewOrderDataVo newOrderDataVo = JSONObject.parseObject(content,NewOrderDataVo.class);
-        //                list.add(newOrderDataVo);
-        //            }
-        //        }
-        //        return list;
     }
 
     //清空队列数据

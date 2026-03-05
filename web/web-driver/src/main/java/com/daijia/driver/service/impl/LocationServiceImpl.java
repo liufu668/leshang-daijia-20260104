@@ -6,9 +6,13 @@ import com.daijia.driver.client.DriverInfoFeignClient;
 import com.daijia.driver.service.LocationService;
 import com.daijia.map.client.LocationFeignClient;
 import com.daijia.model.entity.driver.DriverSet;
+import com.daijia.model.form.map.OrderServiceLocationForm;
 import com.daijia.model.form.map.UpdateDriverLocationForm;
+import com.daijia.model.form.map.UpdateOrderLocationForm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,18 +31,17 @@ public class LocationServiceImpl implements LocationService {
         } else {
             throw new GuiguException(ResultCodeEnum.NO_START_SERVICE);
         }
-        //根据司机id获取司机个性化设置信息
-        //        Long driverId = updateDriverLocationForm.getDriverId();
-        //        Result<DriverSet> driverSetResult = driverInfoFeignClient.getDriverSet(driverId);
-        //        DriverSet driverSet = driverSetResult.getData();
-        //
-        //        //判断：如果司机开始接单，更新位置信息
-        //        if(driverSet.getServiceStatus() == 1) {
-        //            Result<Boolean> booleanResult = locationFeignClient.updateDriverLocation(updateDriverLocationForm);
-        //            return booleanResult.getData();
-        //        } else {
-        //            //没有接单
-        //            throw new GuiguException(ResultCodeEnum.NO_START_SERVICE);
-        //        }
     }
+
+    // 司乘同显,更新订单位置到缓存中
+    @Override
+    public Boolean updateOrderLocationToCache(UpdateOrderLocationForm updateOrderLocationForm) {
+        return locationFeignClient.updateOrderLocationToCache(updateOrderLocationForm).getData();
+    }
+
+    @Override
+    public Boolean saveOrderServiceLocation(List<OrderServiceLocationForm> orderLocationServiceFormList) {
+        return locationFeignClient.saveOrderServiceLocation(orderLocationServiceFormList).getData();
+    }
+
 }

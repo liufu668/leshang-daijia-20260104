@@ -20,6 +20,8 @@
         <module>service-map</module>
         <module>service-rules</module>
         <module>service-dispatch</module>
+        <module>service-payment</module>
+        <module>service-coupon</module>
     </modules>
 
     <properties>
@@ -78,6 +80,12 @@
         <dependency>
             <groupId>com.daijia</groupId>
             <artifactId>service-driver-client</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.daijia</groupId>
+            <artifactId>service-customer-client</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>

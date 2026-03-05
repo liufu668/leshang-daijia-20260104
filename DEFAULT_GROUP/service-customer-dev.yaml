@@ -1,57 +1,55 @@
 server:
   port: 8501
-
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 查看日志
+feign:
+  sentinel:
+    enabled: true
 spring:
-  application:
-    name: service-customer
-  datasource:
-    url: jdbc:mysql://localhost:3306/daijia_customer?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&useSSL=false
-    username: root
-    password: admin
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-      maximum-pool-size: 10
-      minimum-idle: 5
+  main:
+    allow-bean-definition-overriding: true #当遇到同样名字的时候，是否允许覆盖注册
+  cloud:
+    openfeign:
+      lazy-attributes-resolution: true #开启懒加载，否则启动报错
+      client:
+        config:
+          default:
+            connectTimeout: 30000
+            readTimeout: 30000
+            loggerLevel: basic
   data:
     redis:
       host: localhost
       port: 6379
-      password:  # 如果有密码就填，没有就留空或删除这行
-      database: 0  # 添加这个，默认是0
-      connect-timeout: 2000 # ms 修改timeout的配置名
-      timeout: 2000 # ms 这是lettuce的command-timeout
-      lettuce:
+      database: 0
+      timeout: 1800000
+      password:
+      jedis:
         pool:
-          enabled: true  # 明确启用连接池
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-          max-wait: -1 # ms  # 添加这个配置
-        shutdown-timeout: 100 # ms  # 添加关闭超时
-
-# MyBatis-Plus 配置
-mybatis-plus:
-  mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.daijia.model.entity.customer
-  configuration:
-    map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    cache-enabled: true
-    lazy-loading-enabled: true
-  global-config:
-    db-config:
-      id-type: auto
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
-
-# 日志配置
-logging:
-  level:
-    root: INFO
-    com.daijia: DEBUG
-    com.baomidou.mybatisplus: DEBUG
-    org.springframework.data.redis: DEBUG  # 添加Redis调试日志
+          max-active: 20 #最大连接数
+          max-wait: -1    #最大阻塞等待时间(负数表示没限制)
+          max-idle: 5    #最大空闲
+          min-idle: 0     #最小空闲
+  rabbitmq:
+    host: 192.168.101.12
+    port: 5672
+    username: guest
+    password: guest
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/daijia_customer?characterEncoding=utf-8&useSSL=false
+    username: root
+    password: admin
+    hikari:
+      connection-test-query: SELECT 1
+      connection-timeout: 60000
+      idle-timeout: 500000
+      max-lifetime: 540000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      pool-name: GuliHikariPool
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8

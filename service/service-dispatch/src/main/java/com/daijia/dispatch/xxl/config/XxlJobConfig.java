@@ -8,9 +8,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * xxl-job config
- *
- * @author xuxueli 2017-04-28
+ * XxlJobConfig (执行器配置)                                    ││
+ * 功能：配置XxlJobSpringExecutor Bean                          ││
+ * 作用：让当前应用成为XXL-JOB执行器
  */
 @Configuration
 public class XxlJobConfig {

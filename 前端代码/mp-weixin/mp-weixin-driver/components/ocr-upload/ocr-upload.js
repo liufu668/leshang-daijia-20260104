@@ -36,7 +36,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   setup(__props, { emit }) {
     const props = __props;
     const upLoadUrl = common_vendor.computed(() => {
-      return "http://localhost:8600/driver-api" + props.suffixUrl;
+      
+      // return "http://localhost:8600/driver-api" + props.suffixUrl;
+      return "http://192.168.101.12:8600/driver-api" + props.suffixUrl;
     });
     const header = common_vendor.ref({
       token: utils_storage.getToken()

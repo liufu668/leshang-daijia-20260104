@@ -26,7 +26,7 @@ public class RedissonConfig {
     private static String ADDRESS_PREFIX = "redis://";
 
     /**
-     * 自动装配
+     * 自动装配 RedissonClient 客户端对象
      *
      */
     @Bean

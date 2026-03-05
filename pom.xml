@@ -39,6 +39,10 @@
 		<redisson.version>3.27.2</redisson.version>
 		<knife4j.version>4.1.0</knife4j.version>
 		<xxl-job.version>2.4.0</xxl-job.version>
+		<minio.version>8.5.2</minio.version>
+		<wxpay.version>0.2.11</wxpay.version>
+		<seata.version>1.7.0</seata.version>
+
 
 
 
@@ -50,6 +54,37 @@
 	<!-- 关键：依赖版本管理 -->
 	<dependencyManagement>
 		<dependencies>
+
+			<dependency>
+				<groupId>io.seata</groupId>
+				<artifactId>seata-spring-boot-starter</artifactId>
+				<version>${seata.version}</version>
+			</dependency>
+			<!--<dependency>-->
+			<!--	<groupId>io.seata</groupId>-->
+			<!--	<artifactId>seata-all</artifactId>-->
+			<!--	<version>${seata.version}</version>-->
+			<!--</dependency>-->
+			<!--<dependency>-->
+			<!--	<groupId>com.alibaba.cloud</groupId>-->
+			<!--	<artifactId>spring-cloud-starter-alibaba-seata</artifactId>-->
+			<!--	<version>${spring-cloud-alibaba.version}</version>-->
+			<!--</dependency>-->
+
+			<dependency>
+				<groupId>com.github.wechatpay-apiv3</groupId>
+				<artifactId>wechatpay-java</artifactId>
+				<version>${wxpay.version}</version>
+			</dependency>
+
+
+			<!-- minio -->
+			<dependency>
+				<groupId>io.minio</groupId>
+				<artifactId>minio</artifactId>
+				<version>${minio.version}</version>
+			</dependency>
+
 
 			<!-- xxl-job -->
 			<dependency>
@@ -167,10 +202,10 @@
 				<plugin>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
-					<configuration>
+					<!--<configuration>-->
 						<!-- 跳过非应用模块 -->
-						<skip>true</skip>
-					</configuration>
+						<!--<skip>true</skip>-->
+					<!--</configuration>-->
 					<executions>
 						<execution>
 							<goals>

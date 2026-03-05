@@ -18,6 +18,7 @@
         <module>common-util</module>
         <module>service-util</module>
         <module>service-security</module>
+        <module>rabbit-util</module>
     </modules>
 
     <properties>

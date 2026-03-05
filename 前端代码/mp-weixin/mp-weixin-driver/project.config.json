@@ -19,7 +19,7 @@
     "condition": false
   },
   "compileType": "miniprogram",
-  "libVersion": "3.3.5",
+  "libVersion": "2.11",
   "appid": "wx663d1d8b0f350e5d",
   "projectname": "designated-driver-minprogram-passenger",
   "condition": {

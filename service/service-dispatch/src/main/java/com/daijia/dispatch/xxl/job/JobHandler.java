@@ -5,17 +5,18 @@ import com.daijia.dispatch.service.NewOrderService;
 import com.daijia.model.entity.dispatch.XxlJobLog;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * 任务类(存放业务逻辑代码)
+ */
 @Component
+@RequiredArgsConstructor
 public class JobHandler {
 
-    @Autowired
-    private XxlJobLogMapper xxlJobLogMapper;
-
-    @Autowired
-    private NewOrderService newOrderService;
+    private final XxlJobLogMapper xxlJobLogMapper;
+    private final NewOrderService newOrderService;
 
     @XxlJob("newOrderTaskHandler")
     public void newOrderTaskHandler() {

@@ -5,6 +5,7 @@ import com.daijia.common.exception.GuiguException;
 import com.daijia.common.result.ResultCodeEnum;
 import com.daijia.dispatch.xxl.config.XxlJobClientConfig;
 import com.daijia.model.entity.dispatch.XxlJobInfo;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +18,11 @@ import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class XxlJobClient {
 
-    @Autowired
-    private XxlJobClientConfig xxlJobClientConfig;
-
-    @Autowired
-    private RestTemplate restTemplate;
+    private final XxlJobClientConfig xxlJobClientConfig;
+    private final RestTemplate restTemplate;
 
     @SneakyThrows
     public Long addJob(String executorHandler, String param, String corn, String desc){

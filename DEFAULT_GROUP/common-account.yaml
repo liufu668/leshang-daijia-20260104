@@ -2,6 +2,27 @@ wechat:
   app-id: ${WECHAT_APPID}
   app-secret: ${WECHAT_APP_SECRET}
 
+wx:
+  v3pay:
+    #小程序微信公众平台appId
+    appid: XX
+    #商户号
+    merchantId: XX
+    #商户API私钥路径
+    privateKeyPath: XX
+    #商户证书序列号
+    merchantSerialNumber: XX
+    #商户APIV3密钥
+    apiV3key: XX
+    #异步回调地址
+    notifyUrl: http://192.168.101.12:8600/payment/wxPay/notify
+
 jwt:
   secret: ${JWT_SECRET}
   expiration-hours: 24
+
+minio:
+  endpointUrl: http://localhost:9001
+  accessKey: admin
+  secretKey: admin123456
+  bucketName: sph

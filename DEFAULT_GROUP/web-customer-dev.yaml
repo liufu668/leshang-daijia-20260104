@@ -1,38 +1,47 @@
 server:
   port: 8601
+feign:
+  sentinel:
+    enabled: true
 spring:
-  application:
-    name: web-customer
+  main:
+    allow-bean-definition-overriding: true #当遇到同样名字的时候，是否允许覆盖注册
   cloud:
-    nacos:
-      discovery:
-        server-addr: 192.168.101.12:8848
     openfeign:
-      lazy-attributes-resolution: true
+      lazy-attributes-resolution: true #开启懒加载，否则启动报错
       client:
         config:
           default:
             connectTimeout: 30000
             readTimeout: 30000
             loggerLevel: basic
+  rabbitmq:
+    host: 192.168.101.12
+    port: 5672
+    username: guest
+    password: guest
+    publisher-confirm-type: correlated
+    publisher-returns: true
   data:
     redis:
       host: localhost
       port: 6379
-      password:  # 如果有密码就填，没有就留空或删除这行
-      database: 0  # 添加这个，默认是0
-      connect-timeout: 2000 # ms  # 修改timeout的配置名
-      timeout: 2000 # ms  # 这是lettuce的command-timeout
-      lettuce:
+      database: 0
+      timeout: 1800000
+      password:
+      jedis:
         pool:
-          enabled: true  # 明确启用连接池
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-          max-wait: -1 # ms  # 添加这个配置
-        shutdown-timeout: 100 # ms  # 添加关闭超时
+          max-active: 20 #最大连接数
+          max-wait: -1    #最大阻塞等待时间(负数表示没限制)
+          max-idle: 5    #最大空闲
+          min-idle: 0     #最小空闲
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
-
-
+  servlet:
+    multipart:
+      max-file-size: 10MB     #单个文件最大限制
+      max-request-size: 20MB  #多个文件最大限制
+seata:
+  tx-service-group: daijia_tx_group
+  enable-auto-data-source-proxy: false

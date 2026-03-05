@@ -33,7 +33,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   emits: ["update:modelValue"],
   setup(__props, { emit }) {
     const props = __props;
-    const upLoadUrl = common_vendor.ref("http://localhost:8600/driver-api/file/upload");
+    
+    // const upLoadUrl = common_vendor.ref("http://localhost:8600/driver-api/file/upload");
+    const upLoadUrl = common_vendor.ref("http://192.168.101.12:8600/driver-api/file/upload");
+
     common_vendor.useAttrs();
     const success = (item, fileList) => {
       console.log("success", item, fileList);

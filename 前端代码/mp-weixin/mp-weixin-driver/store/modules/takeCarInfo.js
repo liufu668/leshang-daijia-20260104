@@ -480,7 +480,9 @@ const useTakeCarInfoStore = common_vendor.defineStore({
               recordCallback: (res) => {
                 console.log("res----", res);
                 common_vendor.wx$1.uploadFile({
-                  url: "http://localhost:8600/driver-api/monitor/upload",
+                  
+                  // url: "http://localhost:8600/driver-api/monitor/upload",
+                  url: "http://192.168.101.12:8600/driver-api/monitor/upload",
                   //仅为示例，非真实的接口地址
                   filePath: res.tempFilePath,
                   header: { token: utils_storage.getToken() },

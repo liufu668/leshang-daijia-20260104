@@ -23,7 +23,13 @@
     </properties>
 
     <dependencies>
-        <!-- 关键：添加微服务依赖 -->
+
+        <!--<dependency>-->
+        <!--    <groupId>io.seata</groupId>-->
+        <!--    <artifactId>seata-spring-boot-starter</artifactId>-->
+        <!--    <version>${seata.version}</version>-->
+        <!--</dependency>-->
+
         <!-- Feign 服务调用 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

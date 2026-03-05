@@ -13,6 +13,7 @@ import com.daijia.model.entity.driver.*;
 import com.daijia.model.form.driver.DriverFaceModelForm;
 import com.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.daijia.model.vo.driver.DriverAuthInfoVo;
+import com.daijia.model.vo.driver.DriverInfoVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
 import com.daijia.driver.service.CosService;
 import com.daijia.driver.service.DriverService;
@@ -219,7 +220,7 @@ public class DriverServiceImpl extends ServiceImpl<DriverInfoMapper, DriverInfo>
     }
 
 
-    ////判断司机当日是否进行过人脸识别
+    //判断司机当日是否进行过人脸识别
     @Override
     public Boolean isFaceRecognition(Long driverId) {
         //根据司机id + 当日日期进行查询
@@ -328,5 +329,33 @@ public class DriverServiceImpl extends ServiceImpl<DriverInfoMapper, DriverInfo>
         return true;
     }
 
+    //获取司机基本信息
+    @Override
+    public DriverInfoVo getDriverInfoOrder(Long driverId) {
+        //司机id获取基本信息
+        DriverInfo driverInfo = driverInfoMapper.selectById(driverId);
 
+        //封装DriverInfoVo
+        DriverInfoVo driverInfoVo = new DriverInfoVo();
+        BeanUtils.copyProperties(driverInfo,driverInfoVo);
+
+        //计算驾龄
+        //获取当前年
+        int currentYear = new DateTime().getYear();
+        //获取驾驶证初次领证日期
+        //driver_license_issue_date
+        int firstYear = new DateTime(driverInfo.getDriverLicenseIssueDate()).getYear();
+        int driverLicenseAge = currentYear - firstYear;
+        driverInfoVo.setDriverLicenseAge(driverLicenseAge);
+
+        return driverInfoVo;
+    }
+
+
+    // 调用微信支付的API的时候需要分别提供司机和乘客的OpenId
+    @Override
+    public String getDriverOpenId(Long driverId) {
+        DriverInfo driverInfo = this.getOne(new LambdaQueryWrapper<DriverInfo>().eq(DriverInfo::getId, driverId).select(DriverInfo::getWxOpenId));
+        return driverInfo.getWxOpenId();
+    }
 }

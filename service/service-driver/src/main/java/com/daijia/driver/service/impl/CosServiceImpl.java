@@ -33,7 +33,7 @@ public class CosServiceImpl implements CosService {
     private final CiService ciService;
 
     /**
-     * 1.文件上传功能 (upload方法)
+     * 1.文件上传功能 (u pload方法)
      * 接收前端上传的MultipartFile文件
      * 将文件上传到腾讯云COS的私有存储桶
      * 文件路径格式：/driver/[自定义路径]/[UUID文件名].[后缀]

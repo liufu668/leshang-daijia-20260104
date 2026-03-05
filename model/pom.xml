@@ -21,6 +21,13 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+            <scope>provided </scope>
+        </dependency>
+
+
         <!-- swagger -->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>

@@ -1,9 +1,16 @@
 package com.daijia.order.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.daijia.model.entity.order.OrderInfo;
 import com.daijia.model.form.order.OrderInfoForm;
-import com.daijia.model.vo.order.CurrentOrderInfoVo;
+import com.daijia.model.form.order.StartDriveForm;
+import com.daijia.model.form.order.UpdateOrderBillForm;
+import com.daijia.model.form.order.UpdateOrderCartForm;
+import com.daijia.model.vo.base.PageVo;
+import com.daijia.model.vo.order.*;
+
+import java.math.BigDecimal;
 
 public interface OrderInfoService  extends IService<OrderInfo> {
 
@@ -20,5 +27,34 @@ public interface OrderInfoService  extends IService<OrderInfo> {
 
     //司机抢单
     Boolean robNewOrder(Long driverId, Long orderId);
+
+    OrderBillVo getOrderBillInfo(Long orderId);
+
+    OrderProfitsharingVo getOrderProfitsharing(Long orderId);
+
+    Boolean driverArriveStartLocation(Long orderId, Long driverId);
+
+    Boolean updateOrderCart(UpdateOrderCartForm updateOrderCartForm);
+
+    Boolean startDriver(StartDriveForm startDriveForm);
+
+    Long getOrderNumByTime(String startTime, String endTime);
+
+    Boolean endDrive(UpdateOrderBillForm updateOrderBillForm);
+
+    //获取乘客订单分页列表
+    PageVo findCustomerOrderPage(Page<OrderInfo> pageParam, Long customerId);
+
+    PageVo findDriverOrderPage(Page<OrderInfo> pageParam, Long driverId);
+
+    Boolean sendOrderBillInfo(Long orderId, Long driverId);
+
+    OrderPayVo getOrderPayVo(String orderNo, Long customerId);
+
+    Boolean updateOrderPayStatus(String orderNo);
+
+    OrderRewardVo getOrderRewardFee(String orderNo);
+
+    Boolean updateCouponAmount(Long orderId, BigDecimal couponAmount);
 
 }

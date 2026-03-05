@@ -22,7 +22,9 @@ const store_modules_user = require("../store/modules/user.js");
 const service = new common_vendor.Request();
 service.setConfig((config) => {
   config.timeout = http_type.ResultEnum.TIMEOUT;
-  config.baseURL = "http://localhost:8600/driver-api";
+  // 20260222改为云服务器公网IP：
+  config.baseURL = "http://192.168.101.12:8600/driver-api";
+  // config.baseURL = "http://localhost:8600/driver-api";
   return config;
 });
 service.interceptors.request.use(
