@@ -1,5 +1,6 @@
 package com.daijia.customer.service.impl;
 
+import com.daijia.common.constant.RedisConstant;
 import com.daijia.common.exception.GuiguException;
 import com.daijia.common.result.Result;
 import com.daijia.common.result.ResultCodeEnum;
@@ -36,18 +37,28 @@ import com.daijia.model.vo.rules.FeeRuleResponseVo;
 import com.daijia.order.client.OrderInfoFeignClient;
 import com.daijia.payment.client.WxPayFeignClient;
 import com.daijia.rules.client.FeeRuleFeignClient;
-//import io.seata.spring.annotation.GlobalTransactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@EnableScheduling
 public class OrderServiceImpl implements OrderService {
 
     private final OrderInfoFeignClient orderInfoFeignClient;
@@ -59,6 +70,11 @@ public class OrderServiceImpl implements OrderService {
     private final WxPayFeignClient wxPayFeignClient;
     private final CustomerInfoFeignClient customerInfoFeignClient;
     private final CouponFeignClient couponFeignClient;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    @Qualifier("applicationTaskExecutor")
+    @Autowired
+    private Executor orderExecutor;
 
     @Override
     public CurrentOrderInfoVo searchCustomerCurrentOrder(Long customerId) {
@@ -70,76 +86,270 @@ public class OrderServiceImpl implements OrderService {
         return mapFeignClient.calculateDrivingLine(calculateDrivingLineForm).getData();
     }
 
-    //预估订单数据
+    //预估订单数据(优化前)
+    //@Override
+    //public ExpectOrderVo expectOrder(ExpectOrderForm expectOrderForm) {
+    //    //获取驾驶线路
+    //    CalculateDrivingLineForm calculateDrivingLineForm = new CalculateDrivingLineForm();
+    //    BeanUtils.copyProperties(expectOrderForm,calculateDrivingLineForm);
+    //    Result<DrivingLineVo> drivingLineVoResult = mapFeignClient.calculateDrivingLine(calculateDrivingLineForm);
+    //    DrivingLineVo drivingLineVo = drivingLineVoResult.getData();
+    //
+    //    //获取订单费用
+    //    FeeRuleRequestForm calculateOrderFeeForm = new FeeRuleRequestForm();
+    //    calculateOrderFeeForm.setDistance(drivingLineVo.getDistance());
+    //    calculateOrderFeeForm.setStartTime(new Date());
+    //    calculateOrderFeeForm.setWaitMinute(0);
+    //    Result<FeeRuleResponseVo> feeRuleResponseVoResult = feeRuleFeignClient.calculateOrderFee(calculateOrderFeeForm);
+    //    FeeRuleResponseVo feeRuleResponseVo = feeRuleResponseVoResult.getData();
+    //
+    //    //封装ExpectOrderVo
+    //    ExpectOrderVo expectOrderVo = new ExpectOrderVo();
+    //    expectOrderVo.setDrivingLineVo(drivingLineVo);
+    //    expectOrderVo.setFeeRuleResponseVo(feeRuleResponseVo);
+    //    return expectOrderVo;
+    //}
+
+    // 预估订单数据(优化后)
     @Override
     public ExpectOrderVo expectOrder(ExpectOrderForm expectOrderForm) {
-        //获取驾驶线路
+        // 先从缓存取
+        String cacheKey = RedisConstant.EXPECT_ORDER_CACHE_PREFIX
+                + expectOrderForm.getStartPointLongitude()
+                + expectOrderForm.getStartPointLatitude()
+                + expectOrderForm.getEndPointLongitude()
+                + expectOrderForm.getEndPointLatitude();
+
+        ExpectOrderVo cacheVo = (ExpectOrderVo) redisTemplate.opsForValue().get(cacheKey);
+        if (cacheVo != null) {
+            return cacheVo;
+        }
+
+        // 缓存没有，远程计算
         CalculateDrivingLineForm calculateDrivingLineForm = new CalculateDrivingLineForm();
-        BeanUtils.copyProperties(expectOrderForm,calculateDrivingLineForm);
-        Result<DrivingLineVo> drivingLineVoResult = mapFeignClient.calculateDrivingLine(calculateDrivingLineForm);
-        DrivingLineVo drivingLineVo = drivingLineVoResult.getData();
+        BeanUtils.copyProperties(expectOrderForm, calculateDrivingLineForm);
+        DrivingLineVo drivingLineVo = mapFeignClient.calculateDrivingLine(calculateDrivingLineForm).getData();
 
-        //获取订单费用
-        FeeRuleRequestForm calculateOrderFeeForm = new FeeRuleRequestForm();
-        calculateOrderFeeForm.setDistance(drivingLineVo.getDistance());
-        calculateOrderFeeForm.setStartTime(new Date());
-        calculateOrderFeeForm.setWaitMinute(0);
-        Result<FeeRuleResponseVo> feeRuleResponseVoResult = feeRuleFeignClient.calculateOrderFee(calculateOrderFeeForm);
-        FeeRuleResponseVo feeRuleResponseVo = feeRuleResponseVoResult.getData();
+        FeeRuleRequestForm feeForm = new FeeRuleRequestForm();
+        feeForm.setDistance(drivingLineVo.getDistance());
+        feeForm.setStartTime(new Date());
+        feeForm.setWaitMinute(0);
+        FeeRuleResponseVo feeRuleResponseVo = feeRuleFeignClient.calculateOrderFee(feeForm).getData();
 
-        //封装ExpectOrderVo
         ExpectOrderVo expectOrderVo = new ExpectOrderVo();
         expectOrderVo.setDrivingLineVo(drivingLineVo);
         expectOrderVo.setFeeRuleResponseVo(feeRuleResponseVo);
+
+        // 放入缓存，5分钟有效
+        redisTemplate.opsForValue().set(cacheKey, expectOrderVo, RedisConstant.CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES);
         return expectOrderVo;
     }
 
-    //乘客下单
+    //乘客下单(优化前)
     //@GlobalTransactional // 只要乘客下单了，任务调度就必须开启
+    //@Override
+    //public Long submitOrder1(SubmitOrderForm submitOrderForm) {
+    //    //1 重新计算驾驶线路
+    //    CalculateDrivingLineForm calculateDrivingLineForm = new CalculateDrivingLineForm();
+    //    BeanUtils.copyProperties(submitOrderForm,calculateDrivingLineForm);
+    //    Result<DrivingLineVo> drivingLineVoResult = mapFeignClient.calculateDrivingLine(calculateDrivingLineForm);
+    //    DrivingLineVo drivingLineVo = drivingLineVoResult.getData();
+    //
+    //    // 只要是远程调用、数据库查询返回的对象，全部都要判空！
+    //    if(drivingLineVo == null) {
+    //        throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+    //    }
+    //
+    //    //2 重新计算订单费用
+    //    FeeRuleRequestForm calculateOrderFeeForm = new FeeRuleRequestForm();
+    //    calculateOrderFeeForm.setDistance(drivingLineVo.getDistance());
+    //    calculateOrderFeeForm.setStartTime(new Date());
+    //    calculateOrderFeeForm.setWaitMinute(0);
+    //    Result<FeeRuleResponseVo> feeRuleResponseVoResult = feeRuleFeignClient.calculateOrderFee(calculateOrderFeeForm);
+    //    FeeRuleResponseVo feeRuleResponseVo = feeRuleResponseVoResult.getData();
+    //
+    //    if(feeRuleResponseVo == null) {
+    //        throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+    //    }
+    //
+    //    //封装数据
+    //    OrderInfoForm orderInfoForm = new OrderInfoForm();
+    //    BeanUtils.copyProperties(submitOrderForm,orderInfoForm);
+    //    orderInfoForm.setExpectDistance(drivingLineVo.getDistance());
+    //    orderInfoForm.setExpectAmount(feeRuleResponseVo.getTotalAmount());
+    //    Result<Long> orderInfoResult = orderInfoFeignClient.saveOrderInfo(orderInfoForm);
+    //    Long orderId = orderInfoResult.getData();
+    //
+    //    if(orderId == null) {
+    //        throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+    //    }
+    //
+    //    //任务调度：查询附近可以接单司机
+    //    NewOrderTaskVo newOrderDispatchVo = new NewOrderTaskVo();
+    //    newOrderDispatchVo.setOrderId(orderId);
+    //    newOrderDispatchVo.setStartLocation(orderInfoForm.getStartLocation());
+    //    newOrderDispatchVo.setStartPointLongitude(orderInfoForm.getStartPointLongitude());
+    //    newOrderDispatchVo.setStartPointLatitude(orderInfoForm.getStartPointLatitude());
+    //    newOrderDispatchVo.setEndLocation(orderInfoForm.getEndLocation());
+    //    newOrderDispatchVo.setEndPointLongitude(orderInfoForm.getEndPointLongitude());
+    //    newOrderDispatchVo.setEndPointLatitude(orderInfoForm.getEndPointLatitude());
+    //    newOrderDispatchVo.setExpectAmount(orderInfoForm.getExpectAmount());
+    //    newOrderDispatchVo.setExpectDistance(orderInfoForm.getExpectDistance());
+    //    newOrderDispatchVo.setExpectTime(drivingLineVo.getDuration());
+    //    newOrderDispatchVo.setFavourFee(orderInfoForm.getFavourFee());
+    //    newOrderDispatchVo.setCreateTime(new Date());
+    //    //远程调用
+    //    Long jobId = newOrderFeignClient.addAndStartTask(newOrderDispatchVo).getData();
+    //
+    //    if(jobId == null) {
+    //        throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+    //    }
+    //
+    //    log.info("订单id为： {}，绑定任务id为：{}", orderId, jobId);
+    //    //返回订单id
+    //    return orderId;
+    //}
+
+    // 乘客下单接口优化后
     @Override
     public Long submitOrder(SubmitOrderForm submitOrderForm) {
-        //1 重新计算驾驶线路
-        CalculateDrivingLineForm calculateDrivingLineForm = new CalculateDrivingLineForm();
-        BeanUtils.copyProperties(submitOrderForm,calculateDrivingLineForm);
-        Result<DrivingLineVo> drivingLineVoResult = mapFeignClient.calculateDrivingLine(calculateDrivingLineForm);
-        DrivingLineVo drivingLineVo = drivingLineVoResult.getData();
+        String cacheKey = RedisConstant.EXPECT_ORDER_CACHE_PREFIX
+                + submitOrderForm.getStartPointLongitude()
+                + submitOrderForm.getStartPointLatitude()
+                + submitOrderForm.getEndPointLongitude()
+                + submitOrderForm.getEndPointLatitude();
 
-        //2 重新计算订单费用
-        FeeRuleRequestForm calculateOrderFeeForm = new FeeRuleRequestForm();
-        calculateOrderFeeForm.setDistance(drivingLineVo.getDistance());
-        calculateOrderFeeForm.setStartTime(new Date());
-        calculateOrderFeeForm.setWaitMinute(0);
-        Result<FeeRuleResponseVo> feeRuleResponseVoResult = feeRuleFeignClient.calculateOrderFee(calculateOrderFeeForm);
-        FeeRuleResponseVo feeRuleResponseVo = feeRuleResponseVoResult.getData();
+        ExpectOrderVo expectOrderVo = (ExpectOrderVo) redisTemplate.opsForValue().get(cacheKey);
 
-        //封装数据
-        OrderInfoForm orderInfoForm = new OrderInfoForm();
-        BeanUtils.copyProperties(submitOrderForm,orderInfoForm);
-        orderInfoForm.setExpectDistance(drivingLineVo.getDistance());
-        orderInfoForm.setExpectAmount(feeRuleResponseVo.getTotalAmount());
-        Result<Long> orderInfoResult = orderInfoFeignClient.saveOrderInfo(orderInfoForm);
-        Long orderId = orderInfoResult.getData();
+        DrivingLineVo drivingLineVo;
+        FeeRuleResponseVo feeRuleResponseVo;
 
-        //任务调度：查询附近可以接单司机
-        NewOrderTaskVo newOrderDispatchVo = new NewOrderTaskVo();
-        newOrderDispatchVo.setOrderId(orderId);
-        newOrderDispatchVo.setStartLocation(orderInfoForm.getStartLocation());
-        newOrderDispatchVo.setStartPointLongitude(orderInfoForm.getStartPointLongitude());
-        newOrderDispatchVo.setStartPointLatitude(orderInfoForm.getStartPointLatitude());
-        newOrderDispatchVo.setEndLocation(orderInfoForm.getEndLocation());
-        newOrderDispatchVo.setEndPointLongitude(orderInfoForm.getEndPointLongitude());
-        newOrderDispatchVo.setEndPointLatitude(orderInfoForm.getEndPointLatitude());
-        newOrderDispatchVo.setExpectAmount(orderInfoForm.getExpectAmount());
-        newOrderDispatchVo.setExpectDistance(orderInfoForm.getExpectDistance());
-        newOrderDispatchVo.setExpectTime(drivingLineVo.getDuration());
-        newOrderDispatchVo.setFavourFee(orderInfoForm.getFavourFee());
-        newOrderDispatchVo.setCreateTime(new Date());
-        //远程调用
-        Long jobId = newOrderFeignClient.addAndStartTask(newOrderDispatchVo).getData();
-        log.info("订单id为： {}，绑定任务id为：{}", orderId, jobId);
-        //返回订单id
+        // ====================== 关键：缓存过期就重新计算 ======================
+        if (expectOrderVo == null) {
+            log.info("订单预估缓存已过期，实时重新计算路线和费用");
+
+            // 重新算路线
+            CalculateDrivingLineForm lineForm = new CalculateDrivingLineForm();
+            BeanUtils.copyProperties(submitOrderForm, lineForm);
+            drivingLineVo = mapFeignClient.calculateDrivingLine(lineForm).getData();
+
+            // 重新算费用
+            FeeRuleRequestForm feeForm = new FeeRuleRequestForm();
+            feeForm.setDistance(drivingLineVo.getDistance());
+            feeForm.setStartTime(new Date());
+            feeForm.setWaitMinute(0);
+            feeRuleResponseVo = feeRuleFeignClient.calculateOrderFee(feeForm).getData();
+
+            // 算完再存一次缓存，方便下次快速下单（可选）
+            ExpectOrderVo newVo = new ExpectOrderVo();
+            newVo.setDrivingLineVo(drivingLineVo);
+            newVo.setFeeRuleResponseVo(feeRuleResponseVo);
+            redisTemplate.opsForValue().set(cacheKey, newVo, RedisConstant.CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES);
+        } else {
+            // 缓存正常，直接用
+            drivingLineVo = expectOrderVo.getDrivingLineVo();
+            feeRuleResponseVo = expectOrderVo.getFeeRuleResponseVo();
+        }
+
+        CompletableFuture<Long> orderFuture = CompletableFuture.supplyAsync(() -> {
+            OrderInfoForm orderInfoForm = new OrderInfoForm();
+            BeanUtils.copyProperties(submitOrderForm, orderInfoForm);
+            orderInfoForm.setExpectDistance(drivingLineVo.getDistance());
+            orderInfoForm.setExpectAmount(feeRuleResponseVo.getTotalAmount());
+            orderInfoForm.setDispatchStatus(RedisConstant.DISPATCH_NOT_START);
+
+            Long orderId = orderInfoFeignClient.saveOrderInfo(orderInfoForm).getData();
+            if (orderId == null) {
+                throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+            }
+            return orderId;
+        }, orderExecutor);
+
+        Long orderId = orderFuture.join();
+
+        NewOrderTaskVo taskVo = buildNewOrderTaskVo(orderId, submitOrderForm, drivingLineVo, feeRuleResponseVo);
+        asyncStartDispatchTask(orderId, taskVo);
+
+        redisTemplate.delete(cacheKey);  // 下单成功删除缓存
         return orderId;
     }
+
+    // 异步派单
+    @Async("orderExecutor")
+    public void asyncStartDispatchTask(Long orderId, NewOrderTaskVo taskVo) {
+        try {
+            log.info("异步开启任务调度，orderId:{}", orderId);
+            Long jobId = newOrderFeignClient.addAndStartTask(taskVo).getData();
+
+            if (jobId != null) {
+                // 调度成功，更新状态
+                orderInfoFeignClient.updateDispatchStatus(orderId, RedisConstant.DISPATCH_STARTED);
+                log.info("调度成功，orderId:{}, jobId:{}", orderId, jobId);
+            }
+        } catch (Exception e) {
+            log.error("异步调度任务异常，orderId:{}", orderId, e);
+        }
+    }
+
+    // ====================== 3. 定时补偿：兜底未调度成功的订单 ======================
+    @Scheduled(fixedRate = 30000) // 每30秒
+    public void compensateUnDispatchOrders() {
+        log.info("定时补偿任务：开始处理未调度订单");
+        // 1. 查询 未调度、创建超过10秒、未取消的订单
+        Result<List<OrderInfo>> result = orderInfoFeignClient.listUnDispatchOrders(10);
+        List<OrderInfo> unDispatchList = result != null ? result.getData() : null;
+        if (unDispatchList == null || unDispatchList.isEmpty()) {
+            log.info("暂无需要补偿的订单");
+            return;  // ✅ 直接返回，不抛异常
+        }
+        for (OrderInfo order : unDispatchList) {
+            try {
+                NewOrderTaskVo taskVo = buildTaskFromOrder(order);
+                Long jobId = newOrderFeignClient.addAndStartTask(taskVo).getData();
+                if (jobId != null) {
+                    orderInfoFeignClient.updateDispatchStatus(order.getId(), RedisConstant.DISPATCH_STARTED);
+                }
+            } catch (Exception e) {
+                log.error("补偿调度失败 orderId:{}", order.getId(), e);
+            }
+        }
+    }
+
+    // 补偿任务调度
+    private NewOrderTaskVo buildTaskFromOrder(OrderInfo order) {
+        NewOrderTaskVo taskVo = new NewOrderTaskVo();
+        taskVo.setOrderId(order.getId());
+        taskVo.setStartLocation(order.getStartLocation());
+        taskVo.setStartPointLongitude(order.getStartPointLongitude());
+        taskVo.setStartPointLatitude(order.getStartPointLatitude());
+        taskVo.setEndLocation(order.getEndLocation());
+        taskVo.setEndPointLongitude(order.getEndPointLongitude());
+        taskVo.setEndPointLatitude(order.getEndPointLatitude());
+        taskVo.setExpectAmount(order.getExpectAmount());
+        taskVo.setExpectDistance(order.getExpectDistance());
+        taskVo.setFavourFee(order.getFavourFee());
+        taskVo.setCreateTime(order.getCreateTime());
+        return taskVo;
+    }
+
+    // ====================== 4. CompletableFuture 并行工具方法 ======================
+    private NewOrderTaskVo buildNewOrderTaskVo(Long orderId, SubmitOrderForm form, DrivingLineVo drivingLineVo, FeeRuleResponseVo feeRuleResponseVo) {
+        NewOrderTaskVo newOrderDispatchVo = new NewOrderTaskVo();
+        newOrderDispatchVo.setOrderId(orderId);
+        newOrderDispatchVo.setStartLocation(form.getStartLocation());
+        newOrderDispatchVo.setStartPointLongitude(form.getStartPointLongitude());
+        newOrderDispatchVo.setStartPointLatitude(form.getStartPointLatitude());
+        newOrderDispatchVo.setEndLocation(form.getEndLocation());
+        newOrderDispatchVo.setEndPointLongitude(form.getEndPointLongitude());
+        newOrderDispatchVo.setEndPointLatitude(form.getEndPointLatitude());
+        newOrderDispatchVo.setExpectAmount(feeRuleResponseVo.getTotalAmount());
+        newOrderDispatchVo.setExpectDistance(drivingLineVo.getDistance());
+        newOrderDispatchVo.setExpectTime(drivingLineVo.getDuration());
+        newOrderDispatchVo.setFavourFee(form.getFavourFee());
+        newOrderDispatchVo.setCreateTime(new Date());
+        return newOrderDispatchVo;
+    }
+
     //查询订单状态
     @Override
     public Integer getOrderStatus(Long orderId) {
@@ -205,6 +415,7 @@ public class OrderServiceImpl implements OrderService {
         return orderInfoFeignClient.findCustomerOrderPage(customerId,page,limit).getData();
     }
 
+    //@GlobalTransactional
     @Override
     public WxPrepayVo createWxPayment(CreateWxPaymentForm createWxPaymentForm) {
         //获取订单支付信息

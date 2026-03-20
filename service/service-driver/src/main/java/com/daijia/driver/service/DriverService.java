@@ -9,6 +9,9 @@ import com.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.daijia.model.vo.driver.DriverInfoVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
 
+import java.util.List;
+import java.util.Map;
+
 public interface DriverService extends IService<DriverInfo> {
     Long login(String code);
 
@@ -26,6 +29,8 @@ public interface DriverService extends IService<DriverInfo> {
 
     //获取司机设置信息
     DriverSet getDriverSet(Long driverId);
+
+    Map<Long, DriverSet> batchGetDriverSet(List<Long> driverIds);
 
     //判断司机当日是否进行过人脸识别
     Boolean isFaceRecognition(Long driverId);

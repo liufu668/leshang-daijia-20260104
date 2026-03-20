@@ -11,8 +11,13 @@ import com.daijia.model.vo.base.PageVo;
 import com.daijia.model.vo.order.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public interface OrderInfoService  extends IService<OrderInfo> {
+
+    List<OrderInfo> listUnDispatchOrders(Integer seconds);
+
+    Boolean updateDispatchStatus(Long orderId, Integer status);
 
     //乘客端查找当前订单
     CurrentOrderInfoVo searchCustomerCurrentOrder(Long customerId);

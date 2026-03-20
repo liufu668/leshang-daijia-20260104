@@ -2,6 +2,7 @@ package com.daijia.model.entity.order;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.Version;
 import com.daijia.model.entity.base.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -130,4 +131,12 @@ public class OrderInfo extends BaseEntity {
     @TableField("remark")
     private String remark;
 
+    // 在OrderInfo类中添加以下字段
+    @Schema(description = "乐观锁版本号")
+    @TableField("version")
+    @Version  // 如果使用MyBatis-Plus的乐观锁插件，可以加这个注解
+    private Integer version;
+
+    // 调度状态：0未调度 1已调度
+    private Integer dispatchStatus;
 }

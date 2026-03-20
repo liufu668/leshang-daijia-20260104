@@ -16,9 +16,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @FeignClient(value = "service-order")
 public interface OrderInfoFeignClient {
+
+    @GetMapping("/order/info/listUnDispatchOrders/{seconds}")
+    Result<List<OrderInfo>> listUnDispatchOrders(@PathVariable("seconds") Integer seconds);
+
+    @PostMapping("/order/info/updateDispatchStatus/{orderId}/{status}")
+    Result<Boolean> updateDispatchStatus(@PathVariable Long orderId, @PathVariable Integer status);
 
     @GetMapping("/order/info/searchCustomerCurrentOrder/{customerId}")
     Result<CurrentOrderInfoVo> searchCustomerCurrentOrder(@PathVariable("customerId") Long customerId);
@@ -30,6 +37,8 @@ public interface OrderInfoFeignClient {
      */
     @PostMapping("/order/info/saveOrderInfo")
     Result<Long> saveOrderInfo(@RequestBody OrderInfoForm orderInfoForm);
+
+
 
     /**
      * 根据订单id获取订单状态

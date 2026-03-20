@@ -1225,3 +1225,32 @@ VALUES (
            NULL,
            0
        );
+
+
+
+
+
+-- 先删除旧表（注意：这会丢失所有已有数据）
+DROP TABLE IF EXISTS `xxl_job_log`;
+
+-- 重新创建表
+CREATE TABLE `xxl_job_log` (
+    -- BaseEntity 中的字段
+                               `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                               `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                               `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                               `is_deleted` tinyint(3) NOT NULL DEFAULT '0' COMMENT '删除标记（0:正常 1:已删除）',
+
+    -- XxlJobLog 自己的字段
+                               `job_id` bigint(20) NOT NULL COMMENT '任务id',
+                               `status` tinyint(3) NOT NULL DEFAULT '0' COMMENT '任务状态 0：失败 1：成功',
+                               `error` text COMMENT '失败信息',
+                               `times` int(11) NOT NULL DEFAULT '0' COMMENT '耗时(单位：毫秒)',
+
+    -- 主键和索引放在最后
+                               PRIMARY KEY (`id`) USING BTREE,
+                               KEY `idx_job_id` (`job_id`) USING BTREE,
+                               KEY `idx_status` (`status`) USING BTREE,
+                               KEY `idx_create_time` (`create_time`) USING BTREE,
+                               KEY `idx_is_deleted` (`is_deleted`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='XXL-JOB任务执行日志表';

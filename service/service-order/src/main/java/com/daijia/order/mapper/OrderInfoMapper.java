@@ -9,6 +9,8 @@ import com.daijia.model.vo.order.OrderPayVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 @Mapper
 public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 

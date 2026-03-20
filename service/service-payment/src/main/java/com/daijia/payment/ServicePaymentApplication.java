@@ -18,6 +18,11 @@ import org.springframework.context.annotation.ComponentScan;
 public class ServicePaymentApplication {
 
     public static void main(String[] args) {
+        //
+        //for(int i = 1; i <= 10000; i++) {
+        //    System.out.println(i +  5915);
+        //}
+
         SpringApplication.run(ServicePaymentApplication.class, args);
     }
 }

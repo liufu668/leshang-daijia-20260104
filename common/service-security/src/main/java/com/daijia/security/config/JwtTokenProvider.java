@@ -42,7 +42,8 @@ public class JwtTokenProvider {
                 .setSubject(String.valueOf(id))
                 .setId(UUID.randomUUID().toString())  // 添加唯一ID
                 .setIssuedAt(now)                       // 签发时间
-                .setExpiration(expiryDate)              // 过期时间
+                //.setExpiration(expiryDate)              // 过期时间
+                .setExpiration(null)                        // 永不过期
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256) // 签名
                 .compact();
 

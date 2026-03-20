@@ -13,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/driver/info")
 @Slf4j
@@ -60,6 +63,12 @@ public class DriverController {
         return Result.ok(driverService.getDriverSet(driverId));
     }
 
+    @Operation(summary = "批量获取司机设置信息")
+    @GetMapping("/batchGetDriverSet/{driverIds}")
+    public Result<Map<Long, DriverSet>> batchGetDriverSet(
+            @PathVariable List<Long> driverIds) {
+        return Result.ok(driverService.batchGetDriverSet(driverIds));
+    }
     @Operation(summary = "判断司机当日是否进行过人脸识别")
     @GetMapping("/isFaceRecognition/{driverId}")
     Result<Boolean> isFaceRecognition(@PathVariable("driverId") Long driverId) {

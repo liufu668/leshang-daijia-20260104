@@ -29,15 +29,14 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.domain.geo.GeoLocation;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /*
 
@@ -78,9 +77,9 @@ public class LocationServiceImpl implements LocationService {
         return true;
     }
 
-    //搜索附近满足条件的司机
-    @Override
-    public List<NearByDriverVo> searchNearByDriver(SearchNearByDriverForm searchNearByDriverForm) {
+    //搜索附近满足条件的司机(优化前)
+    //@Override
+    public List<NearByDriverVo> searchNearByDriver1(SearchNearByDriverForm searchNearByDriverForm) {
         //搜索经纬度位置5公里以内的司机
         //1 操作redis里面geo
         //创建point，经纬度位置
@@ -156,6 +155,87 @@ public class LocationServiceImpl implements LocationService {
 
         }
         return list;
+    }
+
+    /**
+     * 优化版：搜索附近司机（无循环远程调用，批量缓存+本地过滤）
+     */
+    @Override
+    public List<NearByDriverVo> searchNearByDriver(SearchNearByDriverForm searchNearByDriverForm) {
+        // 1. 封装经纬度
+        Point point = new Point(
+                searchNearByDriverForm.getLongitude().doubleValue(),
+                searchNearByDriverForm.getLatitude().doubleValue()
+        );
+
+        // 2. 5公里范围
+        Distance distance = new Distance(
+                SystemConstant.NEARBY_DRIVER_RADIUS,
+                RedisGeoCommands.DistanceUnit.KILOMETERS
+        );
+        Circle circle = new Circle(point, distance);
+
+        // 3. GEO 查询参数
+        RedisGeoCommands.GeoRadiusCommandArgs args =
+                RedisGeoCommands.GeoRadiusCommandArgs.newGeoRadiusArgs()
+                        .includeDistance()
+                        .includeCoordinates()
+                        .sortAscending();
+
+        // 4. Redis GEO 核心查询（超快）
+        GeoResults<RedisGeoCommands.GeoLocation<String>> results =
+                stringRedisTemplate.opsForGeo()
+                        .radius(RedisConstant.DRIVER_GEO_LOCATION, circle, args);
+
+        List<GeoResult<RedisGeoCommands.GeoLocation<String>>> content = results.getContent();
+        if (CollectionUtils.isEmpty(content)) {
+            return Collections.emptyList();
+        }
+
+        // ======================= 优化点开始 =======================
+        // 5. 批量提取司机ID（关键：一次性提取所有ID）
+        List<Long> driverIds = content.stream()
+                .map(item -> Long.parseLong(item.getContent().getName()))
+                .collect(Collectors.toList());
+
+        // 6. 批量从数据库获取司机配置（1次批量操作，替代N次Feign）
+        Map<Long, DriverSet> driverSetMap = driverInfoFeignClient.batchGetDriverSet(driverIds).getData();
+        // ======================= 优化点结束 =======================
+
+        List<NearByDriverVo> resultList = new ArrayList<>();
+
+        // 7. 本地内存遍历过滤（无任何IO，极快）
+        for (GeoResult<RedisGeoCommands.GeoLocation<String>> item : content) {
+            Long driverId = Long.parseLong(item.getContent().getName());
+            DriverSet driverSet = driverSetMap.get(driverId);
+            if (driverSet == null) {
+                continue;
+            }
+
+            // 过滤条件1：订单里程限制
+            BigDecimal orderDistance = driverSet.getOrderDistance();
+            if (orderDistance.doubleValue() != 0
+                    && orderDistance.compareTo(searchNearByDriverForm.getMileageDistance()) < 0) {
+                continue;
+            }
+
+            // 过滤条件2：接单距离限制
+            BigDecimal currentDistance = new BigDecimal(item.getDistance().getValue())
+                    .setScale(2, RoundingMode.HALF_UP);
+            BigDecimal acceptDistance = driverSet.getAcceptDistance();
+            if (acceptDistance.doubleValue() != 0
+                    && acceptDistance.compareTo(currentDistance) < 0) {
+                continue;
+            }
+
+            // 封装符合条件的司机
+            NearByDriverVo vo = new NearByDriverVo();
+            vo.setDriverId(driverId);
+            vo.setDistance(currentDistance);
+            resultList.add(vo);
+        }
+
+        return resultList;
     }
 
     //司机赶往代驾起始点：更新订单地址到缓存

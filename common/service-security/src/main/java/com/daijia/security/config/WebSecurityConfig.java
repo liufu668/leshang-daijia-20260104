@@ -28,7 +28,7 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-    private final TokenAuthenticationFilter tokenAuthenticationFilter;
+    //private final TokenAuthenticationFilter tokenAuthenticationFilter;
 
 
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
@@ -39,11 +39,45 @@ public class WebSecurityConfig {
      * Spring Security 过滤器链配置
      * 定义应用程序的安全规则和认证流程
      */
+    //@Bean
+    //public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    //    http
+    //            // 需要跨域支持
+    //             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+    //
+    //            // 禁用CSRF（跨站请求伪造）保护
+    //            // 对于REST API或无状态应用，通常需要禁用CSRF
+    //            // 因为CSRF主要针对基于浏览器的会话
+    //            .csrf(csrf -> csrf.disable())
+    //
+    //            // 会话管理配置 - 设置为无状态（STATELESS）
+    //            // 意味着不使用HTTP Session来存储安全上下文
+    //            // 适用于JWT等基于令牌的认证
+    //            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+    //
+    //            // 授权配置：定义哪些请求需要认证，哪些可以公开访问
+    //            .authorizeHttpRequests(auth -> auth
+    //                    // 放行（允许匿名访问）的请求路径
+    //                    // 通常包括：登录、注册、公开API等不需要认证的接口
+    //                    .requestMatchers("/customer/login/**").permitAll()
+    //                    .requestMatchers("/driver/login/**").permitAll()
+    //
+    //                    // 其他所有请求都需要认证,登录后可访问
+    //                    .anyRequest().authenticated()
+    //            );
+    //            //.addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+    //    // 构建并返回配置好的安全过滤器链
+    //    return http.build();
+    //}
+
+
+
+    // 压测绕过登录拦截
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 // 需要跨域支持
-                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 // 禁用CSRF（跨站请求伪造）保护
                 // 对于REST API或无状态应用，通常需要禁用CSRF
@@ -57,18 +91,15 @@ public class WebSecurityConfig {
 
                 // 授权配置：定义哪些请求需要认证，哪些可以公开访问
                 .authorizeHttpRequests(auth -> auth
-                        // 放行（允许匿名访问）的请求路径
-                        // 通常包括：登录、注册、公开API等不需要认证的接口
-                        .requestMatchers("/customer/login/**").permitAll()
-                        .requestMatchers("/driver/login/**").permitAll()
-
-                        // 其他所有请求都需要认证,登录后可访问
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                        // 放行全部请求路径
+                        .anyRequest().permitAll()
+                );
         // 构建并返回配置好的安全过滤器链
         return http.build();
     }
+
+
+
     /**
      * CORS配置
      * @return

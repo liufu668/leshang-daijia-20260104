@@ -32,9 +32,9 @@ public class RedisConstant {
     //抢新订单锁
     public static final String ROB_NEW_ORDER_LOCK = "rob:new:order:lock";
     //等待获取锁的时间
-    public static final long ROB_NEW_ORDER_LOCK_WAIT_TIME = 1;
+    public static final long ROB_NEW_ORDER_LOCK_WAIT_TIME = 500;
     //加锁的时间
-    public static final long ROB_NEW_ORDER_LOCK_LEASE_TIME = 1;
+    public static final long ROB_NEW_ORDER_LOCK_LEASE_TIME = 1000;
 
     //优惠券信息
     public static final String COUPON_INFO = "coupon:info:";
@@ -45,4 +45,13 @@ public class RedisConstant {
     public static final long COUPON_LOCK_WAIT_TIME = 1;
     //加锁的时间
     public static final long COUPON_LOCK_LEASE_TIME = 1;
+
+
+    // 缓存前缀：预估订单里程费用
+    public static final String EXPECT_ORDER_CACHE_PREFIX = "order:expect:";
+    // 订单数据(里程和费用)缓存过期时间
+    public static final long CACHE_EXPIRE_MINUTES = 15;
+    // 订单任务调度状态：0未调度 1调度成功
+    public static final Integer DISPATCH_NOT_START = 0;
+    public static final Integer DISPATCH_STARTED = 1;
 }

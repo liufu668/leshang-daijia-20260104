@@ -4,14 +4,16 @@ import com.daijia.common.result.Result;
 import com.daijia.model.entity.driver.DriverSet;
 import com.daijia.model.form.driver.DriverFaceModelForm;
 import com.daijia.model.form.driver.UpdateDriverAuthInfoForm;
+import com.daijia.model.form.map.SearchNearByDriverForm;
 import com.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.daijia.model.vo.driver.DriverInfoVo;
 import com.daijia.model.vo.driver.DriverLoginVo;
+import com.daijia.model.vo.map.NearByDriverVo;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @FeignClient(value = "service-driver")
 public interface DriverInfoFeignClient {
@@ -38,6 +40,10 @@ public interface DriverInfoFeignClient {
      */
     @GetMapping("/driver/info/getDriverSet/{driverId}")
     Result<DriverSet> getDriverSet(@PathVariable("driverId") Long driverId);
+
+    // 批量获取司机设置信息
+    @GetMapping("/driver/info/batchGetDriverSet/{driverIds}")
+    Result<Map<Long, DriverSet>> batchGetDriverSet(@PathVariable("driverIds") List<Long> driverIds);
 
     /**
      * 判断司机当日是否进行过人脸识别

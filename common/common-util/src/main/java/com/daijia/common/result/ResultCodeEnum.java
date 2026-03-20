@@ -44,7 +44,12 @@ public enum ResultCodeEnum {
     COUPON_EXPIRE( 250, "优惠券已过期"),
     COUPON_LESS( 250, "优惠券库存不足"),
     COUPON_USER_LIMIT( 250, "超出领取数量"),
-    ;
+
+    // 新增
+    REMOTE_CALL_ERROR(503, "远程服务调用失败"), // Feign调用错
+    DATA_ACCESS_ERROR(504, "数据操作失败"),     // 数据库/Redis错
+    SYSTEM_ERROR(500, "系统繁忙，请稍后重试");   // 兜底系统错
+
 
     private Integer code;
 

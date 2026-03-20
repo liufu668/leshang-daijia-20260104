@@ -2,27 +2,37 @@ package com.daijia.customer.controller;
 
 import com.daijia.common.result.Result;
 import com.daijia.customer.service.OrderService;
+import com.daijia.driver.client.DriverInfoFeignClient;
+import com.daijia.map.client.LocationFeignClient;
+import com.daijia.map.client.MapFeignClient;
 import com.daijia.model.form.customer.ExpectOrderForm;
 import com.daijia.model.form.customer.SubmitOrderForm;
 import com.daijia.model.form.map.CalculateDrivingLineForm;
+import com.daijia.model.form.map.SearchNearByDriverForm;
 import com.daijia.model.form.payment.CreateWxPaymentForm;
 import com.daijia.model.vo.base.PageVo;
 import com.daijia.model.vo.customer.ExpectOrderVo;
 import com.daijia.model.vo.driver.DriverInfoVo;
 import com.daijia.model.vo.map.DrivingLineVo;
+import com.daijia.model.vo.map.NearByDriverVo;
 import com.daijia.model.vo.map.OrderLocationVo;
 import com.daijia.model.vo.map.OrderServiceLastLocationVo;
 import com.daijia.model.vo.order.CurrentOrderInfoVo;
 import com.daijia.model.vo.order.OrderInfoVo;
 import com.daijia.model.vo.payment.WxPrepayVo;
+import com.daijia.order.client.OrderInfoFeignClient;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+@Slf4j
 @Tag(name = "订单API接口管理")
 @RestController
 @RequestMapping("/order")
@@ -31,6 +41,14 @@ public class OrderController {
 
     private final OrderService orderService;
 
+    private final LocationFeignClient locationFeignClient;
+    @Operation(summary = "搜索附近满足条件的司机")
+    @PostMapping("/searchNearByDriver")
+    public Result<List<NearByDriverVo>> searchNearByDriver(@RequestBody SearchNearByDriverForm searchNearByDriverForm) {
+        return Result.ok(locationFeignClient.searchNearByDriver(searchNearByDriverForm).getData());
+    }
+
+    // http://192.168.101.12:8600/customer-api/order/searchCustomerCurrentOrder
     @Operation(summary = "乘客端查找当前订单")
     @GetMapping("/searchCustomerCurrentOrder")
     public Result<CurrentOrderInfoVo> searchCustomerCurrentOrder() {
@@ -51,12 +69,20 @@ public class OrderController {
         return Result.ok(orderService.expectOrder(expectOrderForm));
     }
 
+    //@Operation(summary = "乘客下单")
+    //@PostMapping("/submitOrder")
+    //public Result<Long> submitOrder(@RequestBody SubmitOrderForm submitOrderForm) {
+    //    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    //    Long customerId = Long.valueOf(authentication.getName());
+    //    submitOrderForm.setCustomerId(customerId);
+    //    return Result.ok(orderService.submitOrder(submitOrderForm));
+    //}
+
+    // 进行压测时绕过登录, 直接在测试数据里添加 customerId
     @Operation(summary = "乘客下单")
     @PostMapping("/submitOrder")
     public Result<Long> submitOrder(@RequestBody SubmitOrderForm submitOrderForm) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Long customerId = Long.valueOf(authentication.getName());
-        submitOrderForm.setCustomerId(customerId);
+        log.info("乘客下单");
         return Result.ok(orderService.submitOrder(submitOrderForm));
     }
 

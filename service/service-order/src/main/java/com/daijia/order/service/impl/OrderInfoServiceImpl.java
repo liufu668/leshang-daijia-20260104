@@ -1,6 +1,7 @@
 package com.daijia.order.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -23,17 +24,18 @@ import com.daijia.order.service.OrderInfoService;
 import com.daijia.order.service.OrderMonitorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RBlockingQueue;
-import org.redisson.api.RDelayedQueue;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
+import org.redisson.api.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -46,6 +48,7 @@ import java.util.concurrent.TimeUnit;
  *      批量操作等方法
  */
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo> implements OrderInfoService {
@@ -57,6 +60,40 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     private final OrderBillMapper orderBillMapper;
     private final OrderProfitsharingMapper orderProfitsharingMapper;
     private final OrderMonitorService orderMonitorService;
+
+    @Override
+    public List<OrderInfo> listUnDispatchOrders(Integer seconds) {
+        LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
+
+        // 1. 只查 等待接单 的订单
+        wrapper.eq(OrderInfo::getStatus, OrderStatus.WAITING_ACCEPT.getStatus());
+
+        // 2. 调度状态 = 0（未调度）
+        wrapper.eq(OrderInfo::getDispatchStatus, RedisConstant.DISPATCH_NOT_START);
+
+        // 3. 创建时间超过 N 秒（比如超过10秒还没调度）
+        wrapper.le(OrderInfo::getCreateTime, new Date(System.currentTimeMillis() - seconds * 1000L));
+        // 4. 查询
+        return orderInfoMapper.selectList(wrapper);
+    }
+
+
+    @Override
+    public Boolean updateDispatchStatus(Long orderId, Integer status) {
+        // 1. 构建更新条件
+        LambdaUpdateWrapper<OrderInfo> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(OrderInfo::getId, orderId);  // 按订单ID更新
+
+        // 2. 设置要更新的字段：dispatchStatus
+        updateWrapper.set(OrderInfo::getDispatchStatus, status);
+
+        // 3. 执行更新
+        int rows = orderInfoMapper.update(null, updateWrapper);
+
+        // 4. 返回是否成功
+        return rows > 0;
+    }
+
 
     //乘客端查找当前是否有未完成的订单
     @Override
@@ -114,11 +151,16 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         //记录日志
         this.log(orderInfo.getId(),orderInfo.getStatus());
 
-        //向redis添加标识
-        //接单标识，标识不存在了说明不在等待接单状态了
-        redisTemplate.opsForValue().set(RedisConstant.ORDER_ACCEPT_MARK,
+        String orderAcceptMark = RedisConstant.ORDER_ACCEPT_MARK + ":" + orderInfo.getId();
+
+        redisTemplate.opsForValue().set(orderAcceptMark,
                 "0", RedisConstant.ORDER_ACCEPT_MARK_EXPIRES_TIME, TimeUnit.MINUTES);
 
+
+        //向redis添加标识
+        //接单标识，标识不存在了说明不在等待接单状态了
+        //redisTemplate.opsForValue().set(RedisConstant.ORDER_ACCEPT_MARK,
+        //                "0", RedisConstant.ORDER_ACCEPT_MARK_EXPIRES_TIME, TimeUnit.MINUTES);
 
         return orderInfo.getId();
 
@@ -210,63 +252,160 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     }
 
 
-    //Redisson分布式锁
-    //司机抢单
-    @Transactional(rollbackFor = Exception.class) // 保证单数据库的数据一致性
+    //司机抢单(优化前)
+    //@Override
+    //public Boolean robNewOrder(Long driverId, Long orderId) {
+    //    //判断订单是否存在，通过Redis，减少数据库压力
+    //    if(!redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK)) {
+    //        //抢单失败
+    //        throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+    //    }
+    //
+    //    //创建锁
+    //    RLock lock = redissonClient.getLock(RedisConstant.ROB_NEW_ORDER_LOCK + orderId);
+    //
+    //    try {
+    //        //获取锁
+    //        boolean flag = lock.tryLock(RedisConstant.ROB_NEW_ORDER_LOCK_WAIT_TIME,RedisConstant.ROB_NEW_ORDER_LOCK_LEASE_TIME, TimeUnit.SECONDS);
+    //        if(flag) {
+    //            if(!redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK)) {
+    //                //抢单失败
+    //                throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+    //            }
+    //            //司机抢单
+    //            //修改order_info表订单状态值2：已经接单 + 司机id + 司机接单时间
+    //            //修改条件：根据订单id
+    //            LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
+    //            wrapper.eq(OrderInfo::getId,orderId);
+    //            OrderInfo orderInfo = orderInfoMapper.selectOne(wrapper);
+    //            //设置
+    //            orderInfo.setStatus(OrderStatus.ACCEPTED.getStatus());
+    //            orderInfo.setDriverId(driverId);
+    //            orderInfo.setAcceptTime(new Date());
+    //            //调用方法修改
+    //            int rows = orderInfoMapper.updateById(orderInfo);
+    //            if(rows != 1) {
+    //                //抢单失败
+    //                throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+    //            }
+    //
+    //            //删除抢单标识
+    //            redisTemplate.delete(RedisConstant.ORDER_ACCEPT_MARK);
+    //        }
+    //    }catch (Exception e) {
+    //        //抢单失败
+    //        throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+    //    }finally {
+    //        //释放
+    //        if(lock.isLocked()) {
+    //            lock.unlock();
+    //        }
+    //    }
+    //    return true;
+    //}
+
+    // 司机抢单(优化后)
     @Override
     public Boolean robNewOrder(Long driverId, Long orderId) {
+
+        log.info("开始抢单,司机ID: {}, 订单ID: {}", driverId, orderId);
+
+
+        // 优化1：Redis 标识拼接 orderId, 减小锁的粒度
+        String orderAcceptMark = RedisConstant.ORDER_ACCEPT_MARK + ":" + orderId;
+
         //判断订单是否存在，通过Redis，减少数据库压力
-        if(!redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK)) {
-            //抢单失败
+        // Redis hasKey 非原子操作（高并发下有数据一致性风险）
+        // 高并发下，线程 A 执行 hasKey 为 true 后，线程 B 立刻删除该 Key，线程 A 仍会继续执行，导致无效抢单。
+        // 所以改用 Lua 原子脚本（处理 Object 返回值），避免并发误判：
+        RedisScript<Long> existsScript = new DefaultRedisScript<>(
+                "if redis.call('exists', KEYS[1]) == 1 then return 1 else return 0 end",
+                Long.class
+        );
+        // 处理Object返回值，避免类型转换异常
+        Object existsObj = redisTemplate.execute(existsScript, Collections.singletonList(orderAcceptMark));
+        Long exists = (existsObj == null) ? 0 : (Long) existsObj;
+        if (exists != 1) {
             throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
         }
 
-        //创建分布式锁
+        // 用分布式锁防止同时抢，用订单状态防止重复抢，双重保证不会一个单被多个司机接到。
         RLock lock = redissonClient.getLock(RedisConstant.ROB_NEW_ORDER_LOCK + orderId);
 
         try {
-            //获取锁
-            /**
-             * TryLock是一种非阻塞式的分布式锁，实现原理：Redis的SETNX命令
-             * 参数：
-             *     waitTime：等待获取锁的时间
-             *     leaseTime：加锁的时间
-             */
-            boolean flag = lock.tryLock(RedisConstant.ROB_NEW_ORDER_LOCK_WAIT_TIME,RedisConstant.ROB_NEW_ORDER_LOCK_LEASE_TIME, TimeUnit.SECONDS);
+            boolean flag = lock.tryLock(
+                    // 一起抢,失败就不等了
+                    0,
+                    RedisConstant.ROB_NEW_ORDER_LOCK_LEASE_TIME,
+                    TimeUnit.MILLISECONDS
+            );
+
             if(flag) {
-                if(!redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK)) {
-                    //抢单失败
+                log.info("获取锁成功,开始处理抢单, driverId={}, orderId={}", driverId, orderId);
+
+                // 双重校验
+                Object innerExistsObj = redisTemplate.execute(existsScript, Collections.singletonList(orderAcceptMark));
+                Long innerExists = (innerExistsObj == null) ? 0 : (Long) innerExistsObj;
+                if (innerExists != 1) {
+                    log.warn("订单已被抢, orderId={}", orderId);
                     throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
                 }
-                //司机抢单
-                //修改order_info表订单状态值2：已经接单 + 司机id + 司机接单时间
-                //修改条件：根据订单id
-                LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
-                wrapper.eq(OrderInfo::getId,orderId);
-                OrderInfo orderInfo = orderInfoMapper.selectOne(wrapper);
-                //设置
-                orderInfo.setStatus(OrderStatus.ACCEPTED.getStatus());
-                orderInfo.setDriverId(driverId);
-                orderInfo.setAcceptTime(new Date());
-                //调用方法修改
-                int rows = orderInfoMapper.updateById(orderInfo);
+
+                // 核心逻辑：只更新状态为WAITING_ACCEPT的订单，同时用version做乐观锁（需给order_info加version字段）
+                // 性能提升要点: 用乐观锁替代了 db 默认的悲观锁
+                LambdaQueryWrapper<OrderInfo> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.select(OrderInfo::getId, OrderInfo::getVersion)
+                        .eq(OrderInfo::getId, orderId);
+                OrderInfo orderInfo = orderInfoMapper.selectOne(queryWrapper);
+                if (orderInfo == null) {
+                    log.warn("订单不存在, orderId={}", orderId);
+                    throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+                }
+
+                // 6. 数据库条件更新+乐观锁
+                LambdaUpdateWrapper<OrderInfo> updateWrapper = new LambdaUpdateWrapper<>();
+                updateWrapper.eq(OrderInfo::getId, orderId)
+                        .eq(OrderInfo::getStatus, OrderStatus.WAITING_ACCEPT.getStatus())
+                        .eq(OrderInfo::getVersion, orderInfo.getVersion())
+                        .set(OrderInfo::getVersion, orderInfo.getVersion() + 1)
+                        .set(OrderInfo::getStatus, OrderStatus.ACCEPTED.getStatus())
+                        .set(OrderInfo::getDriverId, driverId)
+                        .set(OrderInfo::getAcceptTime, new Date());
+                int rows = orderInfoMapper.update(null, updateWrapper);
+
                 if(rows != 1) {
                     //抢单失败
                     throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
                 }
 
-                //删除抢单标识
-                redisTemplate.delete(RedisConstant.ORDER_ACCEPT_MARK);
+                String deleteScript = "if redis.call('exists', KEYS[1]) == 1 then redis.call('del', KEYS[1]); return 1 else return 0 end";
+                Object deleteObj = redisTemplate.execute(
+                        new DefaultRedisScript<>(deleteScript, Integer.class),
+                        Collections.singletonList(orderAcceptMark)
+                );
+                Integer deleteResult = (deleteObj == null) ? 0 : (Integer) deleteObj;
+                log.info("删除Redis订单标识, orderId={}, 结果:{}", orderId, deleteResult == 1 ? "成功" : "失败");
+
+            }else {
+                throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
             }
-        }catch (Exception e) {
-            //抢单失败
+        }catch (GuiguException e) {
+            // 业务异常直接抛出，保留原始信息
+            throw e;
+        } catch (Exception e) {
+            log.error("抢单异常, driverId={}, orderId={}", driverId, orderId, e);
             throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
-        }finally {
-            //释放
-            if(lock.isLocked()) {
-                lock.unlock();
+        } finally {
+            // 优化解锁逻辑：用Redisson的safeUnlock，避免IllegalMonitorStateException
+            if (lock.isHeldByCurrentThread()) {
+                try {
+                    lock.unlock();
+                } catch (Exception e) {
+                    log.error("解锁异常, orderId={}", orderId, e);
+                }
             }
         }
+
         return true;
     }
 

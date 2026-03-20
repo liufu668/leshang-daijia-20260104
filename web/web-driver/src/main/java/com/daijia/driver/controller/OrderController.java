@@ -15,11 +15,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @Tag(name = "订单API接口管理")
 @RestController
 @RequestMapping("/order")
@@ -49,10 +51,18 @@ public class OrderController {
         return Result.ok(orderService.searchDriverCurrentOrder(driverId));
     }
 
+    //@Operation(summary = "司机抢单")
+    //@GetMapping("/robNewOrder/{orderId}")
+    //public Result<Boolean> robNewOrder(@PathVariable Long orderId) {
+    //    Long driverId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+    //    return Result.ok(orderService.robNewOrder(driverId, orderId));
+    //}
+
+    // 进行压测时绕过登录
     @Operation(summary = "司机抢单")
-    @GetMapping("/robNewOrder/{orderId}")
-    public Result<Boolean> robNewOrder(@PathVariable Long orderId) {
-        Long driverId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+    @GetMapping("/robNewOrder")
+    public Result<Boolean> robNewOrder(@RequestParam Long driverId, @RequestParam Long orderId) {
+        //log.info("开始抢单,司机ID: {}, 订单ID: {}", driverId, orderId);
         return Result.ok(orderService.robNewOrder(driverId, orderId));
     }
 

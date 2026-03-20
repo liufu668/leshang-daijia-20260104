@@ -30,10 +30,15 @@ import me.chanjar.weixin.common.error.WxErrorException;
 import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -217,6 +222,31 @@ public class DriverServiceImpl extends ServiceImpl<DriverInfoMapper, DriverInfo>
         wrapper.eq(DriverSet::getDriverId,driverId);
         DriverSet driverSet = driverSetMapper.selectOne(wrapper);
         return driverSet;
+    }
+
+    // 批量查询司机设置信息
+    @Override
+    public Map<Long, DriverSet> batchGetDriverSet(List<Long> driverIds) {
+        // 1. 判空
+        if (CollectionUtils.isEmpty(driverIds)) {
+            return new HashMap<>();
+        }
+
+        // 2. 根据 driverId 批量查询（重点：用 in 查询）
+        LambdaQueryWrapper<DriverSet> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(DriverSet::getDriverId, driverIds);  // 这里必须是 driverId
+        List<DriverSet> list = driverSetMapper.selectList(queryWrapper);
+
+        // 3. 转成 Map<driverId, DriverSet>
+        if (CollectionUtils.isEmpty(list)) {
+            return new HashMap<>();
+        }
+
+        return list.stream()
+                .collect(Collectors.toMap(
+                        DriverSet::getDriverId,
+                        item -> item
+                ));
     }
 
 

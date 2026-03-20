@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Tag(name = "订单API接口管理")
 @RestController
@@ -25,6 +26,19 @@ import java.math.BigDecimal;
 public class OrderInfoController {
 
     private final OrderInfoService orderInfoService;
+
+    @Operation(summary = "查询创建超过 N 秒、未被调度、等待接单中的订单列表")
+    @GetMapping("/listUnDispatchOrders/{seconds}")
+    public Result<List<OrderInfo>> listUnDispatchOrders(@PathVariable Integer seconds) {
+        List<OrderInfo> list = orderInfoService.listUnDispatchOrders(seconds);
+        return Result.ok(list);
+    }
+
+    @Operation(summary = "更新订单的任务调度开启状态")
+    @PostMapping("/updateDispatchStatus/{orderId}/{status}")
+    public Result<Boolean> updateDispatchStatus(@PathVariable Long orderId, @PathVariable Integer status) {
+        return Result.ok(orderInfoService.updateDispatchStatus(orderId, status));
+    }
 
     @Operation(summary = "乘客端查找当前订单")
     @GetMapping("/searchCustomerCurrentOrder/{customerId}")

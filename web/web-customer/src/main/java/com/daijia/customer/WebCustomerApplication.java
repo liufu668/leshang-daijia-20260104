@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication(exclude = {
         DataSourceAutoConfiguration.class,
@@ -28,6 +29,7 @@ import org.springframework.context.annotation.ComponentScan;
         "com.daijia.common", // service-util模块
         "com.daijia.customer", //当前模块
 })
+@EnableAsync(proxyTargetClass = true)
 public class WebCustomerApplication {
     public static void main(String[] args) {
         SpringApplication.run(WebCustomerApplication.class, args);

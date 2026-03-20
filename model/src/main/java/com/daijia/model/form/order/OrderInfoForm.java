@@ -48,5 +48,7 @@ public class OrderInfoForm {
     @Schema(description = "预估里程")
     private BigDecimal expectDistance;
 
+    // 调度状态：0未调度 1已调度
+    private Integer dispatchStatus;
 
 }
