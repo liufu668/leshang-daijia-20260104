@@ -26,7 +26,7 @@ public class CouponInfo extends BaseEntity {
 
     @Schema(description = "金额")
 	@TableField("amount")
-	private BigDecimal amount;
+		private BigDecimal amount;
 
     @Schema(description = "折扣：取值[1 到 10]")
 	@TableField("discount")

@@ -27,10 +27,10 @@ spring:
       password:
       jedis:
         pool:
-          max-active: 20 #最大连接数
+          max-active: 50  # 从 20 改成 50，和线程池核心数匹配
           max-wait: -1    #最大阻塞等待时间(负数表示没限制)
-          max-idle: 5    #最大空闲
-          min-idle: 0     #最小空闲
+          max-idle: 20    # 从 5 改成 20，保留更多空闲连接
+          min-idle: 5     # 从 0 改成 5，避免频繁创建销毁连接
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver

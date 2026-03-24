@@ -86,7 +86,7 @@ public class OrderServiceImpl implements OrderService {
         return mapFeignClient.calculateDrivingLine(calculateDrivingLineForm).getData();
     }
 
-    //预估订单数据(优化前)
+    ////预估订单数据(优化前)
     //@Override
     //public ExpectOrderVo expectOrder(ExpectOrderForm expectOrderForm) {
     //    //获取驾驶线路
@@ -140,15 +140,14 @@ public class OrderServiceImpl implements OrderService {
         expectOrderVo.setDrivingLineVo(drivingLineVo);
         expectOrderVo.setFeeRuleResponseVo(feeRuleResponseVo);
 
-        // 放入缓存，5分钟有效
+        // 放入缓存，15分钟有效
         redisTemplate.opsForValue().set(cacheKey, expectOrderVo, RedisConstant.CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES);
         return expectOrderVo;
     }
 
-    //乘客下单(优化前)
-    //@GlobalTransactional // 只要乘客下单了，任务调度就必须开启
+    ////乘客下单(优化前)
     //@Override
-    //public Long submitOrder1(SubmitOrderForm submitOrderForm) {
+    //public Long submitOrder(SubmitOrderForm submitOrderForm) {
     //    //1 重新计算驾驶线路
     //    CalculateDrivingLineForm calculateDrivingLineForm = new CalculateDrivingLineForm();
     //    BeanUtils.copyProperties(submitOrderForm,calculateDrivingLineForm);
@@ -224,34 +223,34 @@ public class OrderServiceImpl implements OrderService {
         DrivingLineVo drivingLineVo;
         FeeRuleResponseVo feeRuleResponseVo;
 
-        // ====================== 关键：缓存过期就重新计算 ======================
+        // 缓存过期就重新计算
         if (expectOrderVo == null) {
             log.info("订单预估缓存已过期，实时重新计算路线和费用");
 
-            // 重新算路线
             CalculateDrivingLineForm lineForm = new CalculateDrivingLineForm();
             BeanUtils.copyProperties(submitOrderForm, lineForm);
             drivingLineVo = mapFeignClient.calculateDrivingLine(lineForm).getData();
 
-            // 重新算费用
             FeeRuleRequestForm feeForm = new FeeRuleRequestForm();
             feeForm.setDistance(drivingLineVo.getDistance());
             feeForm.setStartTime(new Date());
             feeForm.setWaitMinute(0);
             feeRuleResponseVo = feeRuleFeignClient.calculateOrderFee(feeForm).getData();
 
-            // 算完再存一次缓存，方便下次快速下单（可选）
+            // 重新存入缓存
             ExpectOrderVo newVo = new ExpectOrderVo();
             newVo.setDrivingLineVo(drivingLineVo);
             newVo.setFeeRuleResponseVo(feeRuleResponseVo);
             redisTemplate.opsForValue().set(cacheKey, newVo, RedisConstant.CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES);
         } else {
-            // 缓存正常，直接用
             drivingLineVo = expectOrderVo.getDrivingLineVo();
             feeRuleResponseVo = expectOrderVo.getFeeRuleResponseVo();
         }
 
-        CompletableFuture<Long> orderFuture = CompletableFuture.supplyAsync(() -> {
+        // ==========================================
+        // 核心：完全异步，不join、不阻塞，立即返回订单ID
+        // ==========================================
+        CompletableFuture.supplyAsync(() -> {
             OrderInfoForm orderInfoForm = new OrderInfoForm();
             BeanUtils.copyProperties(submitOrderForm, orderInfoForm);
             orderInfoForm.setExpectDistance(drivingLineVo.getDistance());
@@ -263,15 +262,18 @@ public class OrderServiceImpl implements OrderService {
                 throw new GuiguException(ResultCodeEnum.DATA_ERROR);
             }
             return orderId;
-        }, orderExecutor);
+        }, orderExecutor).thenAccept(orderId -> {
+            // 订单保存成功 → 异步派单
+            NewOrderTaskVo taskVo = buildNewOrderTaskVo(orderId, submitOrderForm, drivingLineVo, feeRuleResponseVo);
+            asyncStartDispatchTask(orderId, taskVo);
 
-        Long orderId = orderFuture.join();
+            // 下单成功 → 删除缓存
+            redisTemplate.delete(cacheKey);
+        });
 
-        NewOrderTaskVo taskVo = buildNewOrderTaskVo(orderId, submitOrderForm, drivingLineVo, feeRuleResponseVo);
-        asyncStartDispatchTask(orderId, taskVo);
-
-        redisTemplate.delete(cacheKey);  // 下单成功删除缓存
-        return orderId;
+        // 立即返回一个临时订单ID（前端轮询状态）
+        // 这里必须返回，不能没有return！
+        return -1L;
     }
 
     // 异步派单
@@ -415,21 +417,24 @@ public class OrderServiceImpl implements OrderService {
         return orderInfoFeignClient.findCustomerOrderPage(customerId,page,limit).getData();
     }
 
-    //@GlobalTransactional
     @Override
     public WxPrepayVo createWxPayment(CreateWxPaymentForm createWxPaymentForm) {
         //获取订单支付信息
         OrderPayVo orderPayVo = orderInfoFeignClient.getOrderPayVo(createWxPaymentForm.getOrderNo(),
                 createWxPaymentForm.getCustomerId()).getData();
+
+        if(orderPayVo == null) {
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
+
         //判断
         if(orderPayVo.getStatus() != OrderStatus.UNPAID.getStatus()) {
             throw new GuiguException(ResultCodeEnum.ILLEGAL_REQUEST);
         }
 
-        //获取乘客和司机openid
-        String customerOpenId = customerInfoFeignClient.getCustomerOpenId(orderPayVo.getCustomerId()).getData();
-
-        String driverOpenId = driverInfoFeignClient.getDriverOpenId(orderPayVo.getDriverId()).getData();
+        //获取乘客和司机openid(个人测试跳过微信支付,而且用的乘客,司机信息查不到对应的openid)
+        //String customerOpenId = customerInfoFeignClient.getCustomerOpenId(orderPayVo.getCustomerId()).getData();
+        //String driverOpenId = driverInfoFeignClient.getDriverOpenId(orderPayVo.getDriverId()).getData();
 
         //处理优惠卷
         BigDecimal couponAmount = null;
@@ -443,6 +448,7 @@ public class OrderServiceImpl implements OrderService {
             useCouponForm.setOrderAmount(orderPayVo.getPayAmount());
             useCouponForm.setCustomerId(createWxPaymentForm.getCustomerId());
             couponAmount = couponFeignClient.useCoupon(useCouponForm).getData();
+            log.info("使用优惠券后可减免的金额:{}", couponAmount);
         }
 
         //更新订单支付金额
@@ -453,12 +459,13 @@ public class OrderServiceImpl implements OrderService {
 
             //当前支付金额
             payAmount = payAmount.subtract(couponAmount);
+            log.info("当前需要支付的金额: {}", payAmount);
         }
 
         //封装需要数据到实体类，远程调用发起微信支付
         PaymentInfoForm paymentInfoForm = new PaymentInfoForm();
-        paymentInfoForm.setCustomerOpenId(customerOpenId);
-        paymentInfoForm.setDriverOpenId(driverOpenId);
+        //paymentInfoForm.setCustomerOpenId(customerOpenId);
+        //paymentInfoForm.setDriverOpenId(driverOpenId);
         paymentInfoForm.setOrderNo(orderPayVo.getOrderNo());
 
         paymentInfoForm.setAmount(payAmount);

@@ -196,16 +196,41 @@
 
 	</dependencies>
 
+	<!--<build>-->
+	<!--	<pluginManagement>-->
+	<!--		<plugins>-->
+	<!--			<plugin>-->
+	<!--				<groupId>org.springframework.boot</groupId>-->
+	<!--				<artifactId>spring-boot-maven-plugin</artifactId>-->
+	<!--				&lt;!&ndash;<configuration>&ndash;&gt;-->
+	<!--					&lt;!&ndash; 跳过非应用模块 &ndash;&gt;-->
+	<!--					&lt;!&ndash;<skip>true</skip>&ndash;&gt;-->
+	<!--				&lt;!&ndash;</configuration>&ndash;&gt;-->
+	<!--				<executions>-->
+	<!--					<execution>-->
+	<!--						<goals>-->
+	<!--							<goal>repackage</goal>-->
+	<!--						</goals>-->
+	<!--					</execution>-->
+	<!--				</executions>-->
+	<!--			</plugin>-->
+	<!--		</plugins>-->
+	<!--	</pluginManagement>-->
+	<!--</build>-->
+
+
+	<!-- IDEA 就会：
+		不再索引 target
+		不再索引 .idea
+		不再索引 test 测试类
+		不再索引前端的 node_modules
+		CPU 立刻下降，JIT 不再疯狂编译，内存狂降-->
 	<build>
 		<pluginManagement>
 			<plugins>
 				<plugin>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
-					<!--<configuration>-->
-						<!-- 跳过非应用模块 -->
-						<!--<skip>true</skip>-->
-					<!--</configuration>-->
 					<executions>
 						<execution>
 							<goals>
@@ -216,5 +241,20 @@
 				</plugin>
 			</plugins>
 		</pluginManagement>
+
+		<!-- ✅ 正确：排除不需要索引的文件夹，让IDEA不卡死 -->
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<!-- 在这里面写 excludes，才是正确语法 -->
+				<excludes>
+					<exclude>**/target/**</exclude>
+					<exclude>**/.idea/**</exclude>
+					<exclude>**/test/**</exclude>
+					<exclude>**/node_modules/**</exclude>
+					<exclude>**/dist/**</exclude>
+				</excludes>
+			</resource>
+		</resources>
 	</build>
 </project>

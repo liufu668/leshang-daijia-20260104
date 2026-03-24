@@ -27,20 +27,20 @@ spring:
       password:
       jedis:
         pool:
-          max-active: 20 #最大连接数
+          max-active: 50  # 从 20 改成 50，和线程池核心数匹配
           max-wait: -1    #最大阻塞等待时间(负数表示没限制)
-          max-idle: 5    #最大空闲
-          min-idle: 0     #最小空闲
+          max-idle: 20    # 从 5 改成 20，保留更多空闲连接
+          min-idle: 5     # 从 0 改成 5，避免频繁创建销毁连接
   rabbitmq:
     host: 192.168.101.12
     port: 5672
-    username: guest
-    password: guest
+    username: admin
+    password: 123456
     publisher-confirm-type: CORRELATED
     publisher-returns: true
     listener:
       simple:
-        cknowledge-mode: manual #默认情况下消息消费者是自动确认消息的，如果要手动确认消息则需要修改确认模式为manual
+        acknowledge-mode: manual #默认情况下消息消费者是自动确认消息的，如果要手动确认消息则需要修改确认模式为manual
         prefetch: 1 # 消费者每次从队列获取的消息数量。此属性当不设置时为：轮询分发，设置为1为：公平分发
   datasource:
     type: com.zaxxer.hikari.HikariDataSource

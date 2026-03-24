@@ -134,12 +134,21 @@ public class OrderController {
         return Result.ok(pageVo);
     }
 
+    /*
     @Operation(summary = "创建微信支付")
     @PostMapping("/createWxPayment")
     public Result<WxPrepayVo> createWxPayment(@RequestBody CreateWxPaymentForm createWxPaymentForm) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Long customerId = Long.valueOf(authentication.getName());
         createWxPaymentForm.setCustomerId(customerId);
+        return Result.ok(orderService.createWxPayment(createWxPaymentForm));
+    }
+    */
+
+    // 压测跳过登录认证
+    @Operation(summary = "创建微信支付")
+    @PostMapping("/createWxPayment")
+    public Result<WxPrepayVo> createWxPayment(@RequestBody CreateWxPaymentForm createWxPaymentForm) {
         return Result.ok(orderService.createWxPayment(createWxPaymentForm));
     }
 

@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -63,48 +64,63 @@ public class WxPayServiceImpl implements WxPayService {
                 paymentInfoMapper.insert(paymentInfo);
             }
 
-            //2 创建微信支付使用对象
-            JsapiServiceExtension service =
-                    new JsapiServiceExtension.Builder().config(rsaAutoCertificateConfig).build();
+            ////2 创建微信支付使用对象
+            //JsapiServiceExtension service =
+            //        new JsapiServiceExtension.Builder().config(rsaAutoCertificateConfig).build();
+            //
+            ////3 创建request对象，封装微信支付需要参数
+            //PrepayRequest request = new PrepayRequest();
+            //Amount amount = new Amount();
+            //
+            ////amount.setTotal(paymentInfoForm.getAmount().multiply(new BigDecimal(100)).intValue());
+            //amount.setTotal(1); //TODO 为了测试，支付1分钱
+            //request.setAmount(amount);
+            //request.setAppid(wxPayV3Properties.getAppid());
+            //request.setMchid(wxPayV3Properties.getMerchantId());
+            ////string[1,127]
+            //String description = paymentInfo.getContent();
+            //if(description.length() > 127) {
+            //    description = description.substring(0, 127);
+            //}
+            //request.setDescription(description);
+            //
+            //request.setNotifyUrl(wxPayV3Properties.getNotifyUrl());
+            //
+            //request.setOutTradeNo(paymentInfo.getOrderNo());
+            //
+            ////获取用户信息
+            //Payer payer = new Payer();
+            //payer.setOpenid(paymentInfoForm.getCustomerOpenId());
+            //request.setPayer(payer);
+            //
+            ////是否指定分账，不指定不能分账
+            //SettleInfo settleInfo = new SettleInfo();
+            //settleInfo.setProfitSharing(true);
+            //request.setSettleInfo(settleInfo);
+            //
+            ////4 调用微信支付使用对象里面方法实现微信支付调用
+            //PrepayWithRequestPaymentResponse response = service.prepayWithRequestPayment(request);
+            //
+            ////5 根据返回结果，封装到WxPrepayVo里面
+            //WxPrepayVo wxPrepayVo = new WxPrepayVo();
+            //BeanUtils.copyProperties(response,wxPrepayVo);
+            //wxPrepayVo.setTimeStamp(response.getTimeStamp());
+            //return wxPrepayVo;
 
-            //3 创建request对象，封装微信支付需要参数
-            PrepayRequest request = new PrepayRequest();
-            Amount amount = new Amount();
 
-            //amount.setTotal(paymentInfoForm.getAmount().multiply(new BigDecimal(100)).intValue());
-            amount.setTotal(1); //TODO 为了测试，支付1分钱
-            request.setAmount(amount);
-            request.setAppid(wxPayV3Properties.getAppid());
-            request.setMchid(wxPayV3Properties.getMerchantId());
-            //string[1,127]
-            String description = paymentInfo.getContent();
-            if(description.length() > 127) {
-                description = description.substring(0, 127);
-            }
-            request.setDescription(description);
-
-            request.setNotifyUrl(wxPayV3Properties.getNotifyUrl());
-
-            request.setOutTradeNo(paymentInfo.getOrderNo());
-
-            //获取用户信息
-            Payer payer = new Payer();
-            payer.setOpenid(paymentInfoForm.getCustomerOpenId());
-            request.setPayer(payer);
-
-            //是否指定分账，不指定不能分账
-            SettleInfo settleInfo = new SettleInfo();
-            settleInfo.setProfitSharing(true);
-            request.setSettleInfo(settleInfo);
-
-            //4 调用微信支付使用对象里面方法实现微信支付调用
-            PrepayWithRequestPaymentResponse response = service.prepayWithRequestPayment(request);
-
-            //5 根据返回结果，封装到WxPrepayVo里面
             WxPrepayVo wxPrepayVo = new WxPrepayVo();
-            BeanUtils.copyProperties(response,wxPrepayVo);
-            wxPrepayVo.setTimeStamp(response.getTimeStamp());
+
+            // 模拟微信返回的必要参数（随便填合法值即可）
+            wxPrepayVo.setAppId(wxPayV3Properties.getAppid());
+            wxPrepayVo.setTimeStamp(String.valueOf(System.currentTimeMillis() / 1000));
+            wxPrepayVo.setNonceStr(UUID.randomUUID().toString().replace("-", ""));
+            wxPrepayVo.setPackageVal("prepay_id=wx" + System.currentTimeMillis()); // 固定格式
+            wxPrepayVo.setSignType("RSA");
+            wxPrepayVo.setPaySign("mock_sign_" + UUID.randomUUID());
+
+            // 直接返回模拟的支付VO，前端可正常调起“假支付”
             return wxPrepayVo;
+
         }catch (Exception e) {
             e.printStackTrace();
             throw new GuiguException(ResultCodeEnum.DATA_ERROR);
