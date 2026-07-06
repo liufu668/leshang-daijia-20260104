@@ -81,6 +81,21 @@ public class CouponInfoController {
         return Result.ok(couponInfoService.useCoupon(useCouponForm));
     }
 
+    @Operation(summary = "预占优惠券")
+    @PostMapping("/preOccupyCoupon")
+    public Result<BigDecimal> preOccupyCoupon(@RequestBody UseCouponForm useCouponForm) {
+        return Result.ok(couponInfoService.preOccupyCoupon(useCouponForm));
+    }
+
+    @Operation(summary = "释放预占优惠券")
+    @PostMapping("/releasePreOccupyCoupon")
+    public Result<Boolean> releasePreOccupyCoupon(
+            @RequestParam("customerId") Long customerId,
+            @RequestParam("orderId") Long orderId
+    ) {
+        return Result.ok(couponInfoService.releasePreOccupyCoupon(customerId, orderId));
+    }
+
     @Operation(summary = "查询已使用优惠券分页列表")
     @GetMapping("findUsedPage/{customerId}/{page}/{limit}")
     public Result<PageVo<UsedCouponVo>> findUsedPage(

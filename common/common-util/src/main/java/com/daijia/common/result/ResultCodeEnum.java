@@ -45,10 +45,18 @@ public enum ResultCodeEnum {
     COUPON_LESS( 250, "优惠券库存不足"),
     COUPON_USER_LIMIT( 250, "超出领取数量"),
 
+    COUPON_UNAVAILABLE(251, "优惠券不可用"),
+    COUPON_STATUS_ERROR(252, "优惠券状态不正确"),
+    COUPON_CONDITION_NOT_MATCH(253, "未满足优惠券使用条件"),
+    COUPON_GET_FAIL(254, "领取优惠券失败"),
+    ILLEGAL_OPERATION(255, "非法操作"),
+
     // 新增
     REMOTE_CALL_ERROR(503, "远程服务调用失败"), // Feign调用错
     DATA_ACCESS_ERROR(504, "数据操作失败"),     // 数据库/Redis错
-    SYSTEM_ERROR(500, "系统繁忙，请稍后重试");   // 兜底系统错
+    SYSTEM_ERROR(500, "系统繁忙，请稍后重试"),   // 兜底系统错
+    SERVICE_BUSY(505, "系统繁忙，请稍后再试");
+
 
 
     private Integer code;

@@ -137,6 +137,6 @@ public class OrderInfo extends BaseEntity {
     @Version  // 如果使用MyBatis-Plus的乐观锁插件，可以加这个注解
     private Integer version;
 
-    // 调度状态：0未调度 1已调度
+    // 调度状态：0未调度 1已调度 3调度失败
     private Integer dispatchStatus;
 }

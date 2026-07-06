@@ -23,7 +23,7 @@ public class CustomerCoupon extends BaseEntity {
 	@TableField("customer_id")
 	private Long customerId;
 
-    @Schema(description = "购物券状态（1：未使用 2：已使用）")
+    @Schema(description = "购物券状态（1：未使用 2: 已预占 3：已使用）")
 	@TableField("status")
 	private Integer status;
 
@@ -42,5 +42,6 @@ public class CustomerCoupon extends BaseEntity {
     @Schema(description = "过期时间")
 	@TableField("expire_time")
 	private Date expireTime;
+
 
 }

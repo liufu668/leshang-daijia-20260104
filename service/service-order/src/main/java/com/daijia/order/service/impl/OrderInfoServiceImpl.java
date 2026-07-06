@@ -1,12 +1,16 @@
 package com.daijia.order.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.nacos.shaded.com.google.common.collect.Lists;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.daijia.common.config.rabbitmq.RabbitConfig;
 import com.daijia.common.constant.RedisConstant;
 import com.daijia.common.exception.GuiguException;
+import com.daijia.common.model.OrderRobMsg;
 import com.daijia.common.result.ResultCodeEnum;
 import com.daijia.model.entity.order.*;
 import com.daijia.model.enums.OrderStatus;
@@ -25,18 +29,20 @@ import com.daijia.order.service.OrderMonitorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.*;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -60,23 +66,24 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     private final OrderBillMapper orderBillMapper;
     private final OrderProfitsharingMapper orderProfitsharingMapper;
     private final OrderMonitorService orderMonitorService;
+    private final RabbitTemplate rabbitTemplate;
 
-    @Override
     public List<OrderInfo> listUnDispatchOrders(Integer seconds) {
         LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
 
         // 1. 只查 等待接单 的订单
         wrapper.eq(OrderInfo::getStatus, OrderStatus.WAITING_ACCEPT.getStatus());
 
-        // 2. 调度状态 = 0（未调度）
-        wrapper.eq(OrderInfo::getDispatchStatus, RedisConstant.DISPATCH_NOT_START);
+        // 2. 调度状态 = 0（未调度）或 3（调度失败，等待重试）
+        wrapper.in(OrderInfo::getDispatchStatus,
+                RedisConstant.DISPATCH_NOT_START,
+                RedisConstant.DISPATCH_FAILED);
 
-        // 3. 创建时间超过 N 秒（比如超过10秒还没调度）
+        // 3. 创建时间超过 N 秒
         wrapper.le(OrderInfo::getCreateTime, new Date(System.currentTimeMillis() - seconds * 1000L));
         // 4. 查询
         return orderInfoMapper.selectList(wrapper);
     }
-
 
     @Override
     public Boolean updateDispatchStatus(Long orderId, Integer status) {
@@ -197,6 +204,63 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         }
     }
 
+    //调用方法取消订单
+    @Override
+    public void orderCancel(long orderId) {
+        //orderId查询订单信息
+        OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
+        //判断
+        if(orderInfo.getStatus()==OrderStatus.WAITING_ACCEPT.getStatus()) {
+            //修改订单状态：取消状态
+            orderInfo.setStatus(OrderStatus.CANCEL_ORDER.getStatus());
+            int rows = orderInfoMapper.updateById(orderInfo);
+            if(rows == 1) {
+                //删除接单标识
+
+                redisTemplate.delete(RedisConstant.ORDER_ACCEPT_MARK);
+            }
+        }
+    }
+
+    @Override
+    public List<OrderInfo> listTimeoutUnpaidOrder(Integer minutes) {
+        LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
+        // 只查询【待支付】状态
+        wrapper.eq(OrderInfo::getStatus, OrderStatus.UNPAID.getStatus());
+        // 超过指定分钟未支付（结束服务时间 - 当前时间）
+        wrapper.le(OrderInfo::getEndServiceTime, new Date(System.currentTimeMillis() - minutes * 60 * 1000L));
+        return orderInfoMapper.selectList(wrapper);
+    }
+
+    @Override
+    public Boolean cancelOrder(Long orderId, String remark) {
+        OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
+        if (orderInfo == null) {
+            return false;
+        }
+
+        // 只有两种状态可以取消：
+        // 1. 等待接单
+        // 2. 待支付（超时未支付）
+        if (!(orderInfo.getStatus().equals(OrderStatus.WAITING_ACCEPT.getStatus())
+                || orderInfo.getStatus().equals(OrderStatus.UNPAID.getStatus()))) {
+            return true;
+        }
+
+        // 更新为取消状态
+        OrderInfo update = new OrderInfo();
+        update.setId(orderId);
+        update.setStatus(OrderStatus.CANCEL_ORDER.getStatus());
+        int rows = orderInfoMapper.updateById(update);
+
+        // 记录日志
+        if (rows == 1) {
+            log(orderId, OrderStatus.CANCEL_ORDER.getStatus());
+        }
+
+        return rows == 1;
+    }
+
     public void log(Long orderId, Integer status) {
         OrderStatusLog orderStatusLog = new OrderStatusLog();
         orderStatusLog.setOrderId(orderId);
@@ -303,7 +367,128 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     //    }
     //    return true;
     //}
+    //
+    //// 司机抢单(优化后)
+    //@Override
+    //public Boolean robNewOrder(Long driverId, Long orderId) {
+    //
+    //    log.info("开始抢单,司机ID: {}, 订单ID: {}", driverId, orderId);
+    //
+    //
+    //    // 优化1：Redis 标识拼接 orderId, 减小锁的粒度
+    //    String orderAcceptMark = RedisConstant.ORDER_ACCEPT_MARK + ":" + orderId;
+    //
+    //    //判断订单是否存在，通过Redis，减少数据库压力
+    //    // Redis hasKey 非原子操作（高并发下有数据一致性风险）
+    //    // 高并发下，线程 A 执行 hasKey 为 true 后，线程 B 立刻删除该 Key，线程 A 仍会继续执行，导致无效抢单。
+    //    // 所以改用 Lua 原子脚本（处理 Object 返回值），避免并发误判：
+    //    RedisScript<Long> existsScript = new DefaultRedisScript<>(
+    //            "if redis.call('exists', KEYS[1]) == 1 then return 1 else return 0 end",
+    //            Long.class
+    //    );
+    //    // 处理Object返回值，避免类型转换异常
+    //    Object existsObj = redisTemplate.execute(existsScript, Collections.singletonList(orderAcceptMark));
+    //    Long exists = (existsObj == null) ? 0 : (Long) existsObj;
+    //    if (exists != 1) {
+    //        throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+    //    }
+    //
+    //    // 用分布式锁防止同时抢，用订单状态防止重复抢，双重保证不会一个单被多个司机接到。
+    //    RLock lock = redissonClient.getLock(RedisConstant.ROB_NEW_ORDER_LOCK + orderId);
+    //
+    //    try {
+    //        boolean flag = lock.tryLock(
+    //                // 一起抢,失败就不等了
+    //                0,
+    //                RedisConstant.ROB_NEW_ORDER_LOCK_LEASE_TIME,
+    //                TimeUnit.MILLISECONDS
+    //        );
+    //
+    //        if(flag) {
+    //            log.info("获取锁成功,开始处理抢单, driverId={}, orderId={}", driverId, orderId);
+    //
+    //            // 双重校验
+    //            Object innerExistsObj = redisTemplate.execute(existsScript, Collections.singletonList(orderAcceptMark));
+    //            Long innerExists = (innerExistsObj == null) ? 0 : (Long) innerExistsObj;
+    //            if (innerExists != 1) {
+    //                log.warn("订单已被抢, orderId={}", orderId);
+    //                throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+    //            }
+    //
+    //            // 核心逻辑：只更新状态为WAITING_ACCEPT的订单，同时用version做乐观锁（需给order_info加version字段）
+    //            // 性能提升要点: 用乐观锁替代了 db 默认的悲观锁
+    //            LambdaQueryWrapper<OrderInfo> queryWrapper = new LambdaQueryWrapper<>();
+    //            queryWrapper.select(OrderInfo::getId, OrderInfo::getVersion)
+    //                    .eq(OrderInfo::getId, orderId);
+    //            OrderInfo orderInfo = orderInfoMapper.selectOne(queryWrapper);
+    //            if (orderInfo == null) {
+    //                log.warn("订单不存在, orderId={}", orderId);
+    //                throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+    //            }
+    //
+    //            // 6. 数据库条件更新+乐观锁
+    //            LambdaUpdateWrapper<OrderInfo> updateWrapper = new LambdaUpdateWrapper<>();
+    //            updateWrapper.eq(OrderInfo::getId, orderId)
+    //                    .eq(OrderInfo::getStatus, OrderStatus.WAITING_ACCEPT.getStatus())
+    //                    .eq(OrderInfo::getVersion, orderInfo.getVersion())
+    //                    .set(OrderInfo::getVersion, orderInfo.getVersion() + 1)
+    //                    .set(OrderInfo::getStatus, OrderStatus.ACCEPTED.getStatus())
+    //                    .set(OrderInfo::getDriverId, driverId)
+    //                    .set(OrderInfo::getAcceptTime, new Date());
+    //            int rows = orderInfoMapper.update(null, updateWrapper);
+    //
+    //            if(rows != 1) {
+    //                //抢单失败
+    //                throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+    //            }
+    //
+    //            String deleteScript = "if redis.call('exists', KEYS[1]) == 1 then redis.call('del', KEYS[1]); return 1 else return 0 end";
+    //            Object deleteObj = redisTemplate.execute(
+    //                    new DefaultRedisScript<>(deleteScript, Integer.class),
+    //                    Collections.singletonList(orderAcceptMark)
+    //            );
+    //            Integer deleteResult = (deleteObj == null) ? 0 : (Integer) deleteObj;
+    //            log.info("删除Redis订单标识, orderId={}, 结果:{}", orderId, deleteResult == 1 ? "成功" : "失败");
+    //
+    //        }else {
+    //            throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+    //        }
+    //    }catch (GuiguException e) {
+    //        // 业务异常直接抛出，保留原始信息
+    //        throw e;
+    //    } catch (Exception e) {
+    //        log.error("抢单异常, driverId={}, orderId={}", driverId, orderId, e);
+    //        throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+    //    } finally {
+    //        // 优化解锁逻辑：用Redisson的safeUnlock，避免IllegalMonitorStateException
+    //        if (lock.isHeldByCurrentThread()) {
+    //            try {
+    //                lock.unlock();
+    //            } catch (Exception e) {
+    //                log.error("解锁异常, orderId={}", orderId, e);
+    //            }
+    //        }
+    //    }
+    //
+    //    return true;
+    //}
 
+    //给核心方法添加 JavaDoc 注释
+    /**
+     * 司机抢单核心逻辑 - 高并发场景下的三重保障机制
+     * <p>
+     * 解决方案：
+     * 1. Redis Lua 脚本保证订单状态判断的原子性
+     * 2. Redisson 分布式锁控制并发访问
+     * 3. RabbitMQ 异步处理 + 发布确认保证消息可靠性
+     * 4. 数据库乐观锁作为最终兜底
+     * </p>
+     *
+     * @param driverId 司机ID
+     * @param orderId  订单ID
+     * @return 抢单成功返回 true
+     * @throws GuiguException 抢单失败时抛出异常（订单已被抢、网络异常等）
+     */
     // 司机抢单(优化后)
     @Override
     public Boolean robNewOrder(Long driverId, Long orderId) {
@@ -315,9 +500,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         String orderAcceptMark = RedisConstant.ORDER_ACCEPT_MARK + ":" + orderId;
 
         //判断订单是否存在，通过Redis，减少数据库压力
-        // Redis hasKey 非原子操作（高并发下有数据一致性风险）
-        // 高并发下，线程 A 执行 hasKey 为 true 后，线程 B 立刻删除该 Key，线程 A 仍会继续执行，导致无效抢单。
-        // 所以改用 Lua 原子脚本（处理 Object 返回值），避免并发误判：
         RedisScript<Long> existsScript = new DefaultRedisScript<>(
                 "if redis.call('exists', KEYS[1]) == 1 then return 1 else return 0 end",
                 Long.class
@@ -351,33 +533,36 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                     throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
                 }
 
-                // 核心逻辑：只更新状态为WAITING_ACCEPT的订单，同时用version做乐观锁（需给order_info加version字段）
-                // 性能提升要点: 用乐观锁替代了 db 默认的悲观锁
-                LambdaQueryWrapper<OrderInfo> queryWrapper = new LambdaQueryWrapper<>();
-                queryWrapper.select(OrderInfo::getId, OrderInfo::getVersion)
-                        .eq(OrderInfo::getId, orderId);
-                OrderInfo orderInfo = orderInfoMapper.selectOne(queryWrapper);
-                if (orderInfo == null) {
-                    log.warn("订单不存在, orderId={}", orderId);
+                // 只发消息，不更新DB
+                OrderRobMsg msg = new OrderRobMsg();
+                msg.setOrderId(orderId);
+                msg.setDriverId(driverId);
+
+                // 1. 创建消息唯一ID（用于确认）
+                CorrelationData correlationData = new CorrelationData(UUID.randomUUID().toString());
+
+                // 2. 发送消息，并等待 MQ 服务器确认
+                rabbitTemplate.convertAndSend(
+                        RabbitConfig.EXCHANGE,
+                        RabbitConfig.ROUTING_KEY,
+                        msg,
+                        correlationData
+                );
+
+                // 3. 等待 MQ 返回 ACK（5秒超时）
+                try {
+                    CorrelationData.Confirm confirm = correlationData.getFuture().get(5, TimeUnit.SECONDS);
+                    // 如果 MQ 返回失败，直接抛异常，不删标识
+                    if (!confirm.isAck()) {
+                        log.error("MQ发送失败，Broker返回NACK，orderId={}", orderId);
+                        throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+                    }
+                } catch (Exception e) {
+                    log.error("等待MQ确认超时或异常，orderId={}", orderId, e);
                     throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
                 }
 
-                // 6. 数据库条件更新+乐观锁
-                LambdaUpdateWrapper<OrderInfo> updateWrapper = new LambdaUpdateWrapper<>();
-                updateWrapper.eq(OrderInfo::getId, orderId)
-                        .eq(OrderInfo::getStatus, OrderStatus.WAITING_ACCEPT.getStatus())
-                        .eq(OrderInfo::getVersion, orderInfo.getVersion())
-                        .set(OrderInfo::getVersion, orderInfo.getVersion() + 1)
-                        .set(OrderInfo::getStatus, OrderStatus.ACCEPTED.getStatus())
-                        .set(OrderInfo::getDriverId, driverId)
-                        .set(OrderInfo::getAcceptTime, new Date());
-                int rows = orderInfoMapper.update(null, updateWrapper);
-
-                if(rows != 1) {
-                    //抢单失败
-                    throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
-                }
-
+                // 只有 MQ 确认成功，才会走到这里删标识
                 String deleteScript = "if redis.call('exists', KEYS[1]) == 1 then redis.call('del', KEYS[1]); return 1 else return 0 end";
                 Object deleteObj = redisTemplate.execute(
                         new DefaultRedisScript<>(deleteScript, Integer.class),
@@ -409,6 +594,120 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         return true;
     }
 
+    // ====================== 新增：抢单消费失败兜底定时任务 ======================
+    /**
+     * 每分钟执行：拉取抢单死信队列消息重试
+     */
+    @Scheduled(fixedRate = 60 * 1000)
+    public void handleRobDlqMessage() {
+        String dlqQueue = RabbitConfig.ROB_DLQ_QUEUE;
+        int handleCount = 0;
+        List<OrderRobMsg> failedMessages = new ArrayList<>();
+
+        while (true) {
+            Message message = rabbitTemplate.receive(dlqQueue);
+            if (message == null) {
+                break;
+            }
+            handleCount++;
+            OrderRobMsg robMsg = null;
+            try {
+                String body = new String(message.getBody(), StandardCharsets.UTF_8);
+                robMsg = JSON.parseObject(body, OrderRobMsg.class);
+                Long orderId = robMsg.getOrderId();
+                Long driverId = robMsg.getDriverId();
+
+                int retryCount = robMsg.getRetryCount() == null ? 1 : robMsg.getRetryCount() + 1;
+                robMsg.setRetryCount(retryCount);
+
+                if (retryCount > 3) {
+                    log.error("【需人工介入】死信消息超过最大重试次数，已丢弃！" +
+                                    "orderId={}, driverId={}, retryCount={}, orderStatus=WAITING_ACCEPT",
+                            orderId, driverId, retryCount);
+                    continue;
+                }
+
+                log.info("定时任务重试死信消息，orderId={}, driverId={}, retryCount={}",
+                        orderId, driverId, retryCount);
+
+                LambdaQueryWrapper<OrderInfo> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.select(OrderInfo::getId, OrderInfo::getVersion, OrderInfo::getStatus)
+                        .eq(OrderInfo::getId, orderId);
+                OrderInfo orderInfo = orderInfoMapper.selectOne(queryWrapper);
+
+                if (orderInfo == null || !OrderStatus.WAITING_ACCEPT.getStatus().equals(orderInfo.getStatus())) {
+                    log.warn("死信消息无效，订单已处理或不存在 orderId={}", orderId);
+                    continue;
+                }
+
+                LambdaUpdateWrapper<OrderInfo> updateWrapper = new LambdaUpdateWrapper<>();
+                updateWrapper.eq(OrderInfo::getId, orderId)
+                        .eq(OrderInfo::getStatus, OrderStatus.WAITING_ACCEPT.getStatus())
+                        .eq(OrderInfo::getVersion, orderInfo.getVersion())
+                        .set(OrderInfo::getVersion, orderInfo.getVersion() + 1)
+                        .set(OrderInfo::getStatus, OrderStatus.ACCEPTED.getStatus())
+                        .set(OrderInfo::getDriverId, driverId)
+                        .set(OrderInfo::getAcceptTime, new Date());
+
+                int rows = orderInfoMapper.update(null, updateWrapper);
+                if (rows == 1) {
+                    log.info("死信消息重试消费成功 orderId={}", orderId);
+                } else if (orderInfo != null
+                        && OrderStatus.WAITING_ACCEPT.getStatus().equals(orderInfo.getStatus())) {
+                    failedMessages.add(robMsg);
+                }
+            } catch (Exception e) {
+                if (robMsg != null && robMsg.getRetryCount() != null && robMsg.getRetryCount() <= 3) {
+                    failedMessages.add(robMsg);
+                } else {
+                    log.error("【需人工介入】死信消息异常且超过最大重试次数，已丢弃！orderId={}",
+                            robMsg != null ? robMsg.getOrderId() : "unknown");
+                }
+                log.error("处理死信消息异常", e);
+            }
+        }
+
+        for (OrderRobMsg msg : failedMessages) {
+            rabbitTemplate.convertAndSend("", dlqQueue, msg);
+        }
+
+        if (handleCount > 0) {
+            log.info("死信处理完成 | 总数:{} | 成功:{} | 重入队:{}",
+                    handleCount, handleCount - failedMessages.size(), failedMessages.size());
+        }
+    }
+
+
+    // 去掉分布式锁(进一步优化司机抢单)
+    //@Override
+    //public Boolean robNewOrder(Long driverId, Long orderId) {
+    //    String key = RedisConstant.ORDER_ACCEPT_MARK + ":" + orderId;
+    //
+    //    // Lua 原子抢单：1000并发只有1人成功
+    //    String script = "if redis.call('get', KEYS[1]) == '1' then "
+    //            + "redis.call('set', KEYS[1], '0');"
+    //            + "redis.call('hset', 'order:winner', KEYS[1], ARGV[1]);"
+    //            + "return 1;"
+    //            + "else "
+    //            + "return 0;"
+    //            + "end";
+    //
+    //    RedisScript<Long> redisScript = new DefaultRedisScript<>(script, Long.class);
+    //    Long result = redisTemplate.execute(redisScript, Lists.newArrayList(key), driverId.toString());
+    //
+    //    if (result == null || result == 0) {
+    //        throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+    //    }
+    //
+    //    // 抢单成功 → 发送 MQ 异步落库
+    //    OrderRobMsg msg = new OrderRobMsg();
+    //    msg.setOrderId(orderId);
+    //    msg.setDriverId(driverId);
+    //    rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.ROUTING_KEY, msg);
+    //
+    //    return true;
+    //}
+    //
     //乘客端获取订单账单信息,准备支付
     @Override
     public OrderBillVo getOrderBillInfo(Long orderId) {
@@ -598,6 +897,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         return orderPayVo;
     }
 
+    @Override
+    public OrderPayVo getOrderInfoByOrderNo(String orderNo) {
+        OrderPayVo orderPayVo = orderInfoMapper.selectOrderInfo(orderNo);
+        return orderPayVo;
+    }
+
     //更新订单支付状态
     @Override
     public Boolean updateOrderPayStatus(String orderNo) {
@@ -650,6 +955,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         return orderRewardVo;
     }
 
+    // 更新 order_bill 表里的优惠券金额
     @Override
     public Boolean updateCouponAmount(Long orderId, BigDecimal couponAmount) {
         orderBillMapper.updateCouponAmount(orderId,couponAmount);

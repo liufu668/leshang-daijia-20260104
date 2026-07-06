@@ -21,4 +21,6 @@ public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 
     OrderPayVo selectOrderPayVo(@Param("orderNo") String orderNo,
                                 @Param("customerId") Long customerId);
+
+    OrderPayVo selectOrderInfo(@Param("orderNo") String orderNo);
 }

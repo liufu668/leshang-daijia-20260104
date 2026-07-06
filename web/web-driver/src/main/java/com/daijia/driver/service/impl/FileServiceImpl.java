@@ -36,10 +36,11 @@ public class FileServiceImpl implements FileService {
 
             // 判断桶是否存在
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(minioProperties.getBucketName()).build());
-            if (!found) {       // 如果不存在，那么此时就创建一个新的桶
+            if (!found) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(minioProperties.getBucketName()).build());
-            } else {  // 如果存在打印信息
-                System.out.println("Bucket 'daijia' already exists.");
+                log.info("创建MinIO Bucket: {}", minioProperties.getBucketName());
+            } else {
+                log.debug("MinIO Bucket已存在: {}", minioProperties.getBucketName());
             }
 
             // 设置存储对象名称

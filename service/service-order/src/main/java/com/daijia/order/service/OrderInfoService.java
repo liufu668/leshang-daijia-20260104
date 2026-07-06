@@ -2,6 +2,7 @@ package com.daijia.order.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.daijia.common.result.Result;
 import com.daijia.model.entity.order.OrderInfo;
 import com.daijia.model.form.order.OrderInfoForm;
 import com.daijia.model.form.order.StartDriveForm;
@@ -9,6 +10,7 @@ import com.daijia.model.form.order.UpdateOrderBillForm;
 import com.daijia.model.form.order.UpdateOrderCartForm;
 import com.daijia.model.vo.base.PageVo;
 import com.daijia.model.vo.order.*;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -56,10 +58,23 @@ public interface OrderInfoService  extends IService<OrderInfo> {
 
     OrderPayVo getOrderPayVo(String orderNo, Long customerId);
 
+    OrderPayVo getOrderInfoByOrderNo(String orderNo);
+
     Boolean updateOrderPayStatus(String orderNo);
 
     OrderRewardVo getOrderRewardFee(String orderNo);
 
     Boolean updateCouponAmount(Long orderId, BigDecimal couponAmount);
+
+    //无人接单取消订单
+    void orderCancel(long parseLong);
+
+    List<OrderInfo> listTimeoutUnpaidOrder(@RequestParam("minutes") Integer minutes) ;
+
+    // 支付失败取消订单
+    Boolean cancelOrder(
+            @RequestParam("orderId") Long orderId,
+            @RequestParam("remark") String remark
+    );
 
 }

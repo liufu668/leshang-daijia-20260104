@@ -10,15 +10,12 @@ import com.daijia.model.vo.base.PageVo;
 import com.daijia.model.vo.order.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-@FeignClient(value = "service-order")
+@FeignClient(value = "service-order", fallback = OrderInfoFeignFallback.class)
 public interface OrderInfoFeignClient {
 
     @GetMapping("/order/info/listUnDispatchOrders/{seconds}")
@@ -177,6 +174,15 @@ public interface OrderInfoFeignClient {
     @GetMapping("/order/info/getOrderPayVo/{orderNo}/{customerId}")
     Result<OrderPayVo> getOrderPayVo(@PathVariable("orderNo") String orderNo, @PathVariable("customerId") Long customerId);
 
+
+    /**
+     * 根据订单编号获取订单信息
+     * @param orderNo
+     * @return
+     */
+    @GetMapping("/order/info/getOrderInfoByOrderNo/{orderNo}")
+    Result<OrderPayVo> getOrderInfoByOrderNo(@PathVariable("orderNo") String orderNo);
+
     /**
      * 更改订单支付状态
      * @param orderNo
@@ -202,4 +208,14 @@ public interface OrderInfoFeignClient {
     @GetMapping("/order/info/updateCouponAmount/{orderId}/{couponAmount}")
     Result<Boolean> updateCouponAmount(@PathVariable Long orderId, @PathVariable BigDecimal couponAmount);
 
+    // 查询超时未支付订单（带优惠券）
+    @GetMapping("/order/info/listTimeoutUnpaidOrder")
+    Result<List<OrderInfo>> listTimeoutUnpaidOrder(@RequestParam("minutes") Integer minutes);
+
+    // 取消订单（关单）
+    @PostMapping("/order/info/cancelOrder")
+    Result<Boolean> cancelOrder(
+            @RequestParam("orderId") Long orderId,
+            @RequestParam("remark") String remark
+    );
 }

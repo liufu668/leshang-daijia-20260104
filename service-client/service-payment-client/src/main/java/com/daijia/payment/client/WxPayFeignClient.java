@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 
-@FeignClient(value = "service-payment")
+@FeignClient(value = "service-payment", fallback = WxPayFeignFallback.class)
 public interface WxPayFeignClient {
 
     /**

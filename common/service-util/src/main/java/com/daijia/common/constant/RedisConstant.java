@@ -33,7 +33,7 @@ public class RedisConstant {
     public static final String ROB_NEW_ORDER_LOCK = "rob:new:order:lock";
     //等待获取锁的时间
     public static final long ROB_NEW_ORDER_LOCK_WAIT_TIME = 500;
-    //加锁的时间
+    //加锁的时间１s
     public static final long ROB_NEW_ORDER_LOCK_LEASE_TIME = 1000;
 
     //优惠券信息
@@ -51,7 +51,9 @@ public class RedisConstant {
     public static final String EXPECT_ORDER_CACHE_PREFIX = "order:expect:";
     // 订单数据(里程和费用)缓存过期时间
     public static final long CACHE_EXPIRE_MINUTES = 15;
-    // 订单任务调度状态：0未调度 1调度成功
+
+    // 订单任务调度状态：0未调度 1调度成功 3调度失败
     public static final Integer DISPATCH_NOT_START = 0;
     public static final Integer DISPATCH_STARTED = 1;
+    public static final Integer DISPATCH_FAILED = 3;
 }

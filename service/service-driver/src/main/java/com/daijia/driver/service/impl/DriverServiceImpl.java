@@ -198,18 +198,17 @@ public class DriverServiceImpl extends ServiceImpl<DriverInfoMapper, DriverInfo>
             req.setUniquePersonControl(4L);
             req.setPersonName(driverInfo.getName());
             req.setImage(driverFaceModelForm.getImageBase64());
-
-            // 返回的resp是一个CreatePersonResponse的实例，与请求对象对应
+            
             CreatePersonResponse resp = client.CreatePerson(req);
-            // 输出json格式的字符串回包
-            System.out.println(AbstractModel.toJsonString(resp));
-            String faceId = resp.getFaceId();
-            if(StringUtils.hasText(faceId)) {
-                driverInfo.setFaceModelId(faceId);
+            
+            log.debug("腾讯云人脸识别响应: {}", AbstractModel.toJsonString(resp));
+            
+            if(resp.getFaceId() != null) {
+                driverInfo.setFaceModelId(resp.getFaceId());
                 driverInfoMapper.updateById(driverInfo);
             }
         } catch (TencentCloudSDKException e) {
-            e.printStackTrace();
+            log.error("腾讯云SDK异常: {}", e.toString(), e);
             return false;
         }
         return true;
@@ -294,7 +293,8 @@ public class DriverServiceImpl extends ServiceImpl<DriverInfoMapper, DriverInfo>
             // 返回的resp是一个VerifyFaceResponse的实例，与请求对象对应
             VerifyFaceResponse resp = client.VerifyFace(req);
             // 输出json格式的字符串回包
-            System.out.println(AbstractModel.toJsonString(resp));
+            log.debug("人脸验证响应: {}", AbstractModel.toJsonString(resp));
+            //System.out.println(AbstractModel.toJsonString(resp));
             if(resp.getIsMatch()) { //照片比对成功
                 //2 如果照片比对成功，静态活体检测
                 Boolean isSuccess = this.
@@ -336,15 +336,14 @@ public class DriverServiceImpl extends ServiceImpl<DriverInfoMapper, DriverInfo>
             req.setImage(imageBase64);
             // 返回的resp是一个DetectLiveFaceResponse的实例，与请求对象对应
             DetectLiveFaceResponse resp = client.DetectLiveFace(req);
-            // 输出json格式的字符串回包
-            System.out.println(DetectLiveFaceResponse.toJsonString(resp));
-            if(resp.getIsLiveness()) {
-                return true;
-            }
+            
+            log.debug("活体检测响应: {}", DetectLiveFaceResponse.toJsonString(resp));
+            
+            return resp.getIsLiveness();
         } catch (TencentCloudSDKException e) {
-            System.out.println(e.toString());
+            log.error("活体检测失败: {}", e.toString(), e);
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
         }
-        return false;
     }
 
     //更新接单状态

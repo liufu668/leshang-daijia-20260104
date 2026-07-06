@@ -1,0 +1,95 @@
+server:
+  port: 8505
+  # ====================== 正确的 Tomcat 线程池 ======================
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+    accept-count: 200
+    connection-timeout: 3000
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+feign:
+  sentinel:
+    enabled: true
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  cloud:
+    openfeign:
+      lazy-attributes-resolution: true
+      client:
+        config:
+          default:
+            connectTimeout: 30000
+            readTimeout: 30000
+            loggerLevel: basic
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 1800000
+      password:
+      jedis:
+        pool:
+          max-active: 50
+          max-wait: -1
+          max-idle: 20
+          min-idle: 5
+
+    mongodb:
+      host: localhost
+      port: 27017
+      database: daijia
+
+rabbitmq:
+  # 生产者侧
+  publisher-confirm-type: CORRELATED  # 开启发布确认（对应你代码 CorrelationData）
+  publisher-returns: true            # 开启消息退回，路由失败消息退回生产者
+
+  # 消费者侧
+  listener:
+    simple:
+      acknowledge-mode: manual       # 手动ACK（和你代码一致）
+      prefetch: 3                     # 每次从MQ预拉取3条消息，不无限推送
+      concurrency: 10                 # 初始并发消费者数 10
+      max-concurrency: 30             # 最大并发消费者数 30
+      retry:
+        enabled: true                 # 开启**本地重试**（Spring 本地重试，不是MQ队列重试）
+        initial-interval: 1000         # 首次重试间隔 1s
+        max-attempts: 3               # 最大重试次数 3次
+
+  # ====================== MySQL 连接池优化 ======================
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/daijia_order?characterEncoding=utf-8&useSSL=false
+    username: root
+    password: admin
+    hikari:
+      connection-test-query: SELECT 1
+      connection-timeout: 60000
+      idle-timeout: 500000
+      max-lifetime: 540000
+      maximum-pool-size: 30    # 从 10 → 30（关键！）
+      minimum-idle: 10
+      pool-name: GuliHikariPool
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+seata:
+  tx-service-group: daijia_tx_group
+  enable-auto-data-source-proxy: false
+  service:
+    vgroup-mapping:
+      daijia_tx_group: default
+    grouplist:
+      default: 127.0.0.1:8091

@@ -190,13 +190,32 @@ public class WxPayServiceImpl implements WxPayService {
         }
     }
 
+    /**
+     * 支付成功后续处理 - 使用 Seata 分布式事务保证数据一致性
+     * <p>
+     * 业务流程：
+     * 1. 更新订单状态为已支付（service-order）
+     * 2. 查询订单奖励金额（service-order）
+     * 3. 司机账户转账（service-driver）
+     * </p>
+     * <p>
+     * 分布式事务保障：
+     * - 使用 @GlobalTransactional 注解开启全局事务
+     * - 任何一个远程调用失败，所有操作自动回滚
+     * - 保证订单状态、司机账户、分账记录的一致性
+     * </p>
+     *
+     * @param orderNo 订单编号
+     */
     //支付成功后续处理
-
     @GlobalTransactional // 启动分布式事务
     @Override
     public void handleOrder(String orderNo) {
+        log.info("开始处理支付后续逻辑, orderNo: {}", orderNo);
+        
         //1 远程调用：更新订单状态：已经支付
         orderInfoFeignClient.updateOrderPayStatus(orderNo);
+        log.info("订单状态已更新, orderNo: {}", orderNo);
 
         //2 远程调用：获取系统奖励，打入到司机账户
         OrderRewardVo orderRewardVo = orderInfoFeignClient.getOrderRewardFee(orderNo).getData();
@@ -207,12 +226,12 @@ public class WxPayServiceImpl implements WxPayService {
             transferForm.setContent(TradeType.REWARD.getContent());
             transferForm.setAmount(orderRewardVo.getRewardFee());
             transferForm.setDriverId(orderRewardVo.getDriverId());
-            //3
+            
             driverAccountFeignClient.transfer(transferForm);
+            log.info("司机奖励转账成功, driverId: {}, amount: {}", orderRewardVo.getDriverId(), orderRewardVo.getRewardFee());
         }
 
-        //3 TODO 其他
-
+        log.info("支付后续处理完成, orderNo: {}", orderNo);
     }
 
     //如果支付成功，调用其他方法实现支付后处理逻辑

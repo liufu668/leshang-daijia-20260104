@@ -7,17 +7,15 @@ import com.daijia.model.vo.coupon.AvailableCouponVo;
 import com.daijia.model.vo.coupon.NoReceiveCouponVo;
 import com.daijia.model.vo.coupon.NoUseCouponVo;
 import com.daijia.model.vo.coupon.UsedCouponVo;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 
-@FeignClient(value = "service-coupon")
+@FeignClient(value = "service-coupon", fallback = CouponFeignFallback.class)
 public interface CouponFeignClient {
 
     /**
@@ -72,6 +70,21 @@ public interface CouponFeignClient {
     @PostMapping("/coupon/info/useCoupon")
     Result<BigDecimal> useCoupon(@RequestBody UseCouponForm useCouponForm);
 
+    /**
+     * 预占优惠券
+     */
+    @PostMapping("/preOccupyCoupon")
+    Result<BigDecimal> preOccupyCoupon(@RequestBody UseCouponForm useCouponForm);
+
+    /**
+     * 支付失败,释放预占的优惠券
+     */
+    // 释放预占优惠券
+    @PostMapping("/releasePreOccupyCoupon")
+    Result<Boolean> releasePreOccupyCoupon(
+            @RequestParam("customerId") Long customerId,
+            @RequestParam("orderId") Long orderId
+    );
 
     /**
      * 查询已使用优惠券分页列表

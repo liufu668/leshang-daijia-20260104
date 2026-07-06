@@ -8,6 +8,9 @@ import java.math.BigDecimal;
 @Data
 public class OrderPayVo {
 
+	@Schema(description = "用户优惠券ID")
+	private Long customerCouponId;
+
 	@Schema(description = "订单id")
 	private Long orderId;
 

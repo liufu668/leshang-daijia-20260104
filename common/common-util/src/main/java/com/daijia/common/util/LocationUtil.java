@@ -1,5 +1,8 @@
 package com.daijia.common.util;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class LocationUtil {
 
     // 地球赤道半径
@@ -27,6 +30,9 @@ public class LocationUtil {
         s = s * EARTH_RADIUS;
         s = Math.round(s * 10000d) / 10000d;
         s = s * 1000;
+        
+        log.debug("计算距离: ({}, {}) -> ({}, {}) = {}米", lat1, lng1, lat2, lng2, s);
+        
         return s;
     }
 

@@ -163,6 +163,12 @@ public class OrderInfoController {
         return Result.ok(orderInfoService.getOrderPayVo(orderNo, customerId));
     }
 
+    @Operation(summary = "获取订单支付信息")
+    @GetMapping("/getOrderInfoByOrderNo/{orderNo}/{customerId}")
+    public Result<OrderPayVo> getOrderInfoByOrderNo(@PathVariable String orderNo) {
+        return Result.ok(orderInfoService.getOrderInfoByOrderNo(orderNo));
+    }
+
     @Operation(summary = "更改订单支付状态")
     @GetMapping("/updateOrderPayStatus/{orderNo}")
     public Result<Boolean> updateOrderPayStatus(@PathVariable String orderNo) {
@@ -181,4 +187,20 @@ public class OrderInfoController {
         return Result.ok(orderInfoService.updateCouponAmount(orderId, couponAmount));
     }
 
+    // 查询超时未支付订单（带优惠券）
+    @Operation(summary = "查询超时未支付订单（带优惠券）")
+    @GetMapping("/order/info/listTimeoutUnpaidOrder")
+    public Result<List<OrderInfo>> listTimeoutUnpaidOrder(@RequestParam("minutes") Integer minutes) {
+        return Result.ok(orderInfoService.listTimeoutUnpaidOrder(minutes));
+    }
+
+    // 取消订单（关单）
+    @Operation(summary = "取消订单（关单）")
+    @PostMapping("/order/info/cancelOrder")
+    public Result<Boolean> cancelOrder(
+            @RequestParam("orderId") Long orderId,
+            @RequestParam("remark") String remark
+    ) {
+        return Result.ok(orderInfoService.cancelOrder(orderId, remark));
+    }
 }

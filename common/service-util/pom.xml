@@ -20,6 +20,12 @@
 
     <dependencies>
 
+        <!-- RabbitMQ-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
         <!-- Feign 服务调用 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -56,6 +62,13 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>3.5.15</version>
+        </dependency>
+        <!--PaginationInnerInterceptor 爆红, 这是因为分页功能的依赖被拆分，需要手动引入额外的依赖。-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>3.5.15</version>
+            <!-- 确保版本与主包一致 -->
         </dependency>
 
         <dependency>

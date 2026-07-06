@@ -18,8 +18,8 @@ import org.springframework.context.annotation.ComponentScan;
 public class ServicePaymentApplication {
 
     public static void main(String[] args) {
-        //
-        //for(int i = 11; i <= 211; i++) {
+
+        //for(int i = 41428; i <= 51428; i++) {
         //    System.out.println(i);
         //}
 
