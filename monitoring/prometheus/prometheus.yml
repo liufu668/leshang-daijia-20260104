@@ -1,0 +1,73 @@
+global:
+  scrape_interval: 15s  # 采集间隔
+  evaluation_interval: 15s  # 规则评估间隔
+
+scrape_configs:
+  # Spring Cloud Gateway
+  - job_name: 'server-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.101.12:8600']
+    basic_auth:
+      username: actuator
+      password: actuator123
+
+  # Service Order
+  - job_name: 'service-order'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.101.12:8505']
+
+  # Service Customer
+  - job_name: 'service-customer'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.101.12:8501']
+
+  # Service Driver
+  - job_name: 'service-driver'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.101.12:8502']
+
+  # Service Map
+  - job_name: 'service-map'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.101.12:8503']
+
+  # Service Rules
+  - job_name: 'service-rules'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.101.12:8504']
+
+  # Service Payment
+  - job_name: 'service-payment'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.101.12:8506']
+
+  # Service Dispatch
+  - job_name: 'service-dispatch'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.101.12:8509']
+
+  # Service Coupon
+  - job_name: 'service-coupon'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.101.12:8511']
+
+  # Web Customer
+  - job_name: 'web-customer'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.101.12:8601']
+
+  # Web Driver
+  - job_name: 'web-driver'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['192.168.101.12:8602']

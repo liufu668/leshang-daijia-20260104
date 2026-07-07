@@ -1,0 +1,146 @@
+version: "3.8"
+# 统一网桥：微服务与中间件互通，容器内直接用服务名访问
+networks:
+  daijia-net:
+    driver: bridge
+# 持久化数据卷，容器删除数据不丢失
+volumes:
+  mysql-data:
+  redis-data:
+  mongo-data:
+  rabbit-data:
+  nacos-data:
+  xxl-job-data:
+
+services:
+  # 1 MySQL 8 业务数据库
+  mysql:
+    image: mysql:8.0.33
+    container_name: daijia-mysql
+    restart: always
+    networks: [daijia-net]
+    ports:
+      - "3306:3306"
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: root123456
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init-sql:/docker-entrypoint-initdb.d # 自动执行daijia建库脚本
+    command:
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --lower_case_table_names=1
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+    # 健康检查，等待数据库就绪
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-proot123456"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # 2 Redis 缓存/分布式锁/GEO
+  redis:
+    image: redis:7-alpine
+    container_name: daijia-redis
+    restart: always
+    networks: [daijia-net]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes # AOF持久化
+
+  # 3 MongoDB 存储司机轨迹
+  mongodb:
+    image: mongo:5
+    container_name: daijia-mongo
+    restart: always
+    networks: [daijia-net]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      TZ: Asia/Shanghai
+
+  # 4 RabbitMQ 带管理面板，抢单消息队列
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: daijia-rabbit
+    restart: always
+    networks: [daijia-net]
+    ports:
+      - "5672:5672"    # 业务通信
+      - "15672:15672"  # 管理后台 admin/admin123
+    environment:
+      TZ: Asia/Shanghai
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq
+
+  # 5 Nacos 注册配置中心
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: daijia-nacos
+    restart: always
+    networks: [daijia-net]
+    ports:
+      - "8848:8848"
+    environment:
+      MODE: standalone
+      TZ: Asia/Shanghai
+      MYSQL_SERVICE_HOST: mysql
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_DB_NAME: nacos_config
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: root123456
+      JVM_OPT: "-Xms512m -Xmx512m"
+    volumes:
+      - nacos-data:/home/nacos/data
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # 6 XXL-Job 分布式定时任务（订单关单、死信巡检）
+  xxl-job:
+    image: xuxueli/xxl-job-admin:2.4.0
+    container_name: daijia-xxljob
+    restart: always
+    networks: [daijia-net]
+    ports:
+      - "8080:8080"
+    environment:
+      TZ: Asia/Shanghai
+      # 连接容器内mysql服务名mysql
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/xxl_job?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123456
+      XXL_JOB_ADMIN_USERNAME: admin
+      XXL_JOB_ADMIN_PASSWORD: 123456
+    volumes:
+      - xxl-job-data:/data
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # 7 Seata AT分布式事务
+  seata:
+    image: seataio/seata-server:1.7.0
+    container_name: daijia-seata
+    restart: always
+    networks: [daijia-net]
+    ports:
+      - "8091:8091"
+    environment:
+      TZ: Asia/Shanghai
+      SEATA_STORE_MODE: db
+      SEATA_DATASOURCE_DRIVER: com.mysql.cj.jdbc.Driver
+      SEATA_DATASOURCE_URL: jdbc:mysql://mysql:3306/seata?serverTimezone=Asia/Shanghai
+      SEATA_DATASOURCE_USER: root
+      SEATA_DATASOURCE_PASSWORD: root123456
+    depends_on:
+      mysql:
+        condition: service_healthy
