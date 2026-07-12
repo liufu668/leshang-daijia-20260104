@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  daijia-net:
+    external: true  # 使用中间件的网络
+
 services:
   grafana:
     image: grafana/grafana:latest
@@ -14,6 +18,8 @@ services:
       - ./dashboards:/etc/grafana/provisioning/dashboards
       - ./datasources:/etc/grafana/provisioning/datasources
     restart: unless-stopped
+    networks:
+      - daijia-net  # 加入同一网络
 
 volumes:
   grafana_data:

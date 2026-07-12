@@ -1,0 +1,23 @@
+version: '3.8'
+
+networks:
+  daijia-net:
+    external: true
+
+services:
+  server-gateway:
+    build: ../server-gateway
+    container_name: daijia-gateway
+    networks:
+      - daijia-net
+    ports:
+      - "8600:8600"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - NACOS_SERVER_ADDR=daijia-nacos:8848  # 用容器名
+      - REDIS_HOST=daijia-redis
+      - MYSQL_HOST=daijia-mysql
+    depends_on:
+      - nacos
+      - redis
+      - mysql

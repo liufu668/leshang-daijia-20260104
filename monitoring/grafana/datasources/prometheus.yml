@@ -7,3 +7,14 @@ datasources:
     url: http://leshang-prometheus:9090
     isDefault: true
     editable: true
+
+# prometheus.yml 改用服务发现
+scrape_configs:
+  - job_name: 'server-gateway'
+    metrics_path: '/actuator/prometheus'
+    dns_sd_configs:
+      - names:
+          - 'server-gateway'
+        type: 'A'
+        port: 8600
+

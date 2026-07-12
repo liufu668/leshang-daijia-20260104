@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  daijia-net:
+    external: true  # 使用中间件的网络
+
 services:
   prometheus:
     image: prom/prometheus:latest
@@ -15,6 +19,10 @@ services:
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
     restart: unless-stopped
+    networks:
+      - daijia-net  # 加入同一网络
+
+
 
 volumes:
   prometheus_data:
